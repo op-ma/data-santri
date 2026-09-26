@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Data Santri — MA Al-Ma'tuq</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy-950:#0B1F3A;
+    --navy-900:#123056;
+    --navy-800:#1A3E6E;
+    --blue-700:#1E4976;
+    --gold-600:#B4881E;
+    --gold-500:#C9A227;
+    --gold-300:#E8C766;
+    --cream-50:#FAF8F3;
+    --ink-900:#14213D;
+  }
+  body{ font-family:'Poppins',sans-serif; background:var(--cream-50); color:var(--ink-900); }
+  .font-arabic{ font-family:'Amiri','Poppins',sans-serif; direction:rtl; }
+
+  .islamic-pattern{
+    background-image:
+      radial-gradient(circle at 10px 10px, rgba(201,162,39,0.18) 1.2px, transparent 1.3px),
+      radial-gradient(circle at 30px 30px, rgba(201,162,39,0.18) 1.2px, transparent 1.3px);
+    background-size:40px 40px;
+  }
+
+  .stat-card{ border-left:4px solid var(--gold-500); background:#fff; border:1px solid rgba(11,31,58,0.08); border-left-width:4px; border-left-color:var(--gold-500); }
+
+  select, input[type="text"]{
+    border:1px solid rgba(11,31,58,0.18);
+    background:#fff;
+  }
+  select:focus, input[type="text"]:focus{
+    outline:none; border-color:var(--gold-500); box-shadow:0 0 0 3px rgba(201,162,39,0.20);
+  }
+
+  table thead th{ position:sticky; top:0; z-index:10; }
+  tbody tr:nth-child(even){ background:#FAF8F3; }
+  tbody tr:hover{ background:#F3ECD9; }
+
+  .scrollbar-thin::-webkit-scrollbar{ height:8px; width:8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb{ background:rgba(201,162,39,0.55); border-radius:4px; }
+  .scrollbar-thin::-webkit-scrollbar-track{ background:rgba(11,31,58,0.05); }
+
+  .modal-backdrop{ background:rgba(11,31,58,0.55); backdrop-filter:blur(2px); }
+
+  .detail-section-title{
+    color:var(--navy-900); border-bottom:2px solid var(--gold-300); padding-bottom:4px; margin-bottom:8px; font-weight:600;
+  }
+
+  .skeleton{ background:linear-gradient(90deg, rgba(11,31,58,0.06) 25%, rgba(11,31,58,0.12) 37%, rgba(11,31,58,0.06) 63%); background-size:400% 100%; animation:skeleton 1.4s ease infinite; }
+  @keyframes skeleton{ 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+</style>
+</head>
+<body class="min-h-screen">
+
+  <!-- HEADER -->
+  <header class="relative overflow-hidden" style="background:linear-gradient(120deg, var(--navy-950), var(--blue-700));">
+    <div class="absolute inset-0 islamic-pattern opacity-40"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <svg width="42" height="42" viewBox="0 0 100 100" class="flex-shrink-0">
+          <polygon points="50,4 61,32 91,32 66,50 76,80 50,62 24,80 34,50 9,32 39,32"
+            fill="none" stroke="#E8C766" stroke-width="3"/>
+          <circle cx="50" cy="50" r="14" fill="#E8C766" opacity="0.9"/>
+        </svg>
+        <div>
+          <h1 class="text-white text-xl sm:text-2xl font-semibold tracking-tight">Sistem Data Santri</h1>
+          <p class="text-sm" style="color:#E8C766;">MA Al-Ma'tuq — Direktori &amp; Analitik Data Siswa</p>
+        </div>
+      </div>
+      <div id="totalBadge" class="self-start sm:self-auto bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white text-sm">
+        Memuat data...
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- ERROR BOX -->
+    <div id="errorBox" class="hidden bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 text-sm leading-relaxed"></div>
+
+    <!-- STATS -->
+    <section id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></section>
+
+    <!-- SEARCH & FILTER -->
+    <section class="bg-white rounded-lg border border-navy-900/10 p-4 sm:p-5 space-y-4" style="border-color:rgba(11,31,58,0.10);">
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input id="searchInput" type="text" placeholder="Cari berdasarkan Nama, NISN, NIK, Nama Ayah, atau Nama Ibu..."
+          class="flex-1 rounded-md px-3 py-2 text-sm">
+        <button id="searchBtn" class="rounded-md px-5 py-2 text-sm font-medium text-white" style="background:var(--navy-900);">
+          Cari
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Markaz / Sekolah</label>
+          <select id="filterMarkaz" class="w-full rounded-md px-3 py-2 text-sm">
+            <option value="">Semua Markaz</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Tingkat</label>
+          <select id="filterTingkat" class="w-full rounded-md px-3 py-2 text-sm">
+            <option value="">Semua Tingkat</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Kelas</label>
+          <select id="filterKelas" class="w-full rounded-md px-3 py-2 text-sm">
+            <option value="">Semua Kelas</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button id="resetBtn" class="text-sm font-medium underline" style="color:var(--blue-700);">Reset filter &amp; pencarian</button>
+      </div>
+    </section>
+
+    <!-- CHARTS -->
+    <section class="grid md:grid-cols-2 gap-4">
+      <div class="bg-white rounded-lg border p-4 sm:p-5" style="border-color:rgba(11,31,58,0.10);">
+        <h3 class="text-sm font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Tingkat</h3>
+        <div class="h-64"><canvas id="chartTingkat"></canvas></div>
+      </div>
+      <div class="bg-white rounded-lg border p-4 sm:p-5" style="border-color:rgba(11,31,58,0.10);">
+        <h3 class="text-sm font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Markaz (Sekolah)</h3>
+        <div class="h-64"><canvas id="chartMarkaz"></canvas></div>
+      </div>
+    </section>
+
+    <!-- TABLE -->
+    <section class="bg-white rounded-lg border" style="border-color:rgba(11,31,58,0.10);">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 sm:p-5 border-b" style="border-color:rgba(11,31,58,0.10);">
+        <p id="resultCount" class="text-sm" style="color:var(--navy-900);">Memuat data siswa...</p>
+        <button id="exportBtn" class="rounded-md px-4 py-2 text-sm font-medium" style="background:var(--gold-500); color:var(--navy-950);">
+          Export Data (CSV)
+        </button>
+      </div>
+
+      <div class="overflow-x-auto scrollbar-thin">
+        <table class="min-w-full text-sm">
+          <thead style="background:var(--navy-900); color:var(--gold-300);">
+            <tr>
+              <th class="px-3 py-2 text-left font-medium">No</th>
+              <th class="px-3 py-2 text-left font-medium">Nama</th>
+              <th class="px-3 py-2 text-left font-medium">Nama Arab</th>
+              <th class="px-3 py-2 text-left font-medium">NIS</th>
+              <th class="px-3 py-2 text-left font-medium">NISN</th>
+              <th class="px-3 py-2 text-left font-medium">Markaz / Sekolah</th>
+              <th class="px-3 py-2 text-left font-medium">Tingkat</th>
+              <th class="px-3 py-2 text-left font-medium">Kelas</th>
+              <th class="px-3 py-2 text-left font-medium">Status</th>
+              <th class="px-3 py-2 text-left font-medium">Detail</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="10" class="px-3 py-6 text-center text-gray-400">Sedang memuat data dari Google Sheets...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center justify-between p-4 sm:p-5 border-t text-sm" style="border-color:rgba(11,31,58,0.10);">
+        <button id="prevBtn" class="px-3 py-1.5 rounded-md border disabled:opacity-40" style="border-color:rgba(11,31,58,0.15);">&larr; Sebelumnya</button>
+        <span id="pageInfo" style="color:var(--navy-900);"></span>
+        <button id="nextBtn" class="px-3 py-1.5 rounded-md border disabled:opacity-40" style="border-color:rgba(11,31,58,0.15);">Berikutnya &rarr;</button>
+      </div>
+    </section>
+
+    <p class="text-center text-xs text-gray-400 pb-4">
+      Data bersifat rahasia dan hanya untuk keperluan administratif internal MA Al-Ma'tuq.
+    </p>
+  </main>
+
+  <!-- DETAIL MODAL -->
+  <div id="detailModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg w-full max-w-3xl max-h-[85vh] overflow-y-auto scrollbar-thin">
+      <div class="flex items-center justify-between px-5 py-4 border-b sticky top-0 bg-white" style="border-color:rgba(11,31,58,0.10);">
+        <h3 class="font-semibold" style="color:var(--navy-900);">Detail Data Siswa</h3>
+        <button id="closeModalBtn" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+      </div>
+      <div id="modalBody" class="p-5 space-y-5"></div>
+    </div>
+  </div>
+
+<script>
+const SHEET_ID = "1khNpDumFu70ODoqPRqgSoRYVBA4j1rPtno4pkGB51VE";
+const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=1`;
+
+const MONTHS_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+const TINGKAT_ORDER = ["Tingkat A","Tingkat B","Tingkat C","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+
+let allStudents = [];
+let filtered = [];
+let page = 1;
+const PAGE_SIZE = 25;
+let chartTingkat, chartMarkaz;
+
+// ---------- helpers ----------
+function esc(str){
+  return (str===undefined || str===null) ? "" : String(str);
+}
+
+function parseIndoDate(str){
+  if(!str) return "";
+  const parts = String(str).trim().split(/[\/\-]/);
+  if(parts.length !== 3) return str;
+  let [d,m,y] = parts;
+  const mi = parseInt(m,10) - 1;
+  if(isNaN(mi) || mi < 0 || mi > 11 || isNaN(parseInt(d,10))) return str;
+  return `${parseInt(d,10)} ${MONTHS_ID[mi]} ${y}`;
+}
+
+function formatTTL(tempat, tanggal){
+  const t = esc(tempat).trim();
+  const tgl = parseIndoDate(esc(tanggal).trim());
+  if(!t && !tgl) return "-";
+  if(!t) return tgl;
+  if(!tgl) return t;
+  return `${t}, ${tgl}`;
+}
+
+function sortTingkat(a,b){
+  const ia = TINGKAT_ORDER.indexOf(a), ib = TINGKAT_ORDER.indexOf(b);
+  if(ia===-1 && ib===-1) return String(a).localeCompare(String(b));
+  if(ia===-1) return 1;
+  if(ib===-1) return -1;
+  return ia-ib;
+}
+
+function sortKelas(a,b){
+  const pa = parseInt(a,10), pb = parseInt(b,10);
+  const na = isNaN(pa) ? 0 : pa;
+  const nb = isNaN(pb) ? 0 : pb;
+  if(na !== nb) return na-nb;
+  return String(a).localeCompare(String(b));
+}
+
+function uniqueSorted(arr, sortFn){
+  const s = Array.from(new Set(arr.filter(v=>v && String(v).trim()!=="")));
+  return sortFn ? s.sort(sortFn) : s.sort((a,b)=>String(a).localeCompare(String(b)));
+}
+
+// ---------- fetch ----------
+async function fetchSheet(){
+  const res = await fetch(GVIZ_URL);
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if(start === -1 || end === -1) throw new Error("Format respons tidak dikenali");
+  const json = JSON.parse(text.substring(start, end+1));
+  const cols = json.table.cols.map((c,i)=> (c.label && c.label.trim()) ? c.label.trim() : `Kolom${i+1}`);
+  const rows = json.table.rows.map(r=>{
+    const obj = {};
+    cols.forEach((label,i)=>{
+      const cell = r.c ? r.c[i] : null;
+      let val = "";
+      if(cell){
+        val = (cell.f !== undefined && cell.f !== null) ? cell.f : ((cell.v !== undefined && cell.v !== null) ? cell.v : "");
+      }
+      obj[label] = typeof val === "string" ? val.trim() : val;
+    });
+    return obj;
+  });
+  return rows;
+}
+
+// ---------- render: stats ----------
+function renderStats(){
+  const total = allStudents.length;
+  const markazCount = uniqueSorted(allStudents.map(s=>s["Sekolah"])).length;
+  const tingkatCount = uniqueSorted(allStudents.map(s=>s["Tingkat"])).length;
+  const kelasCount = uniqueSorted(allStudents.map(s=>s["Kelas"])).length;
+
+  const cards = [
+    {label:"Total Siswa", value: total},
+    {label:"Jumlah Markaz", value: markazCount},
+    {label:"Jumlah Tingkat", value: tingkatCount},
+    {label:"Jumlah Kelas", value: kelasCount},
+  ];
+
+  document.getElementById("statsGrid").innerHTML = cards.map(c => `
+    <div class="stat-card rounded-lg p-4">
+      <p class="text-2xl font-semibold" style="color:var(--navy-950);">${c.value}</p>
+      <p class="text-xs text-gray-500 mt-1">${c.label}</p>
+    </div>
+  `).join("");
+
+  document.getElementById("totalBadge").textContent = `Total Terdaftar: ${total} Siswa`;
+}
+
+// ---------- render: filter options ----------
+function populateFilterOptions(){
+  const markazSel = document.getElementById("filterMarkaz");
+  const tingkatSel = document.getElementById("filterTingkat");
+  const kelasSel = document.getElementById("filterKelas");
+
+  const curMarkaz = markazSel.value;
+  const curTingkat = tingkatSel.value;
+  const curKelas = kelasSel.value;
+
+  const markazOptions = uniqueSorted(allStudents.map(s=>s["Sekolah"]));
+  markazSel.innerHTML = '<option value="">Semua Markaz</option>' +
+    markazOptions.map(m=>`<option value="${m.replace(/"/g,'&quot;')}">${m}</option>`).join("");
+  markazSel.value = markazOptions.includes(curMarkaz) ? curMarkaz : "";
+
+  const tingkatOptions = uniqueSorted(allStudents.map(s=>s["Tingkat"]), sortTingkat);
+  tingkatSel.innerHTML = '<option value="">Semua Tingkat</option>' +
+    tingkatOptions.map(t=>`<option value="${t.replace(/"/g,'&quot;')}">${t}</option>`).join("");
+  tingkatSel.value = tingkatOptions.includes(curTingkat) ? curTingkat : "";
+
+  // Kelas cascades based on selected markaz + tingkat
+  const scoped = allStudents.filter(s=>
+    (!markazSel.value || s["Sekolah"] === markazSel.value) &&
+    (!tingkatSel.value || s["Tingkat"] === tingkatSel.value)
+  );
+  const kelasOptions = uniqueSorted(scoped.map(s=>s["Kelas"]), sortKelas);
+  kelasSel.innerHTML = '<option value="">Semua Kelas</option>' +
+    kelasOptions.map(k=>`<option value="${k.replace(/"/g,'&quot;')}">${k}</option>`).join("");
+  kelasSel.value = kelasOptions.includes(curKelas) ? curKelas : "";
+}
+
+// ---------- filtering & search ----------
+function applyFiltersAndSearch(){
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  const markaz = document.getElementById("filterMarkaz").value;
+  const tingkat = document.getElementById("filterTingkat").value;
+  const kelas = document.getElementById("filterKelas").value;
+
+  filtered = allStudents.filter(s=>{
+    if(markaz && s["Sekolah"] !== markaz) return false;
+    if(tingkat && s["Tingkat"] !== tingkat) return false;
+    if(kelas && s["Kelas"] !== kelas) return false;
+    if(q){
+      const haystack = [s["Nama"], s["NISN"], s["NIK"], s["Nama Ayah"], s["Nama Ibu"]]
+        .map(v=>String(v||"").toLowerCase()).join(" | ");
+      if(!haystack.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=> String(a["Nama"]||"").localeCompare(String(b["Nama"]||"")));
+
+  page = 1;
+  renderTable();
+  renderCharts();
+}
+
+// ---------- table ----------
+function renderTable(){
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if(page > totalPages) page = totalPages;
+  const startIdx = (page-1) * PAGE_SIZE;
+  const pageItems = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+
+  document.getElementById("resultCount").textContent =
+    total === 0 ? "Tidak ada siswa yang cocok dengan pencarian/filter." :
+    `Menampilkan ${startIdx+1}-${Math.min(startIdx+PAGE_SIZE,total)} dari ${total} siswa`;
+
+  const tbody = document.getElementById("tableBody");
+  if(pageItems.length === 0){
+    tbody.innerHTML = `<tr><td colspan="10" class="px-3 py-6 text-center text-gray-400">Tidak ada data.</td></tr>`;
+  } else {
+    tbody.innerHTML = pageItems.map((s, i)=>`
+      <tr class="border-b" style="border-color:rgba(11,31,58,0.06);">
+        <td class="px-3 py-2">${startIdx + i + 1}</td>
+        <td class="px-3 py-2 font-medium" style="color:var(--navy-950);">${esc(s["Nama"]) || "-"}</td>
+        <td class="px-3 py-2 font-arabic text-base">${esc(s["Nama Arab"]) || ""}</td>
+        <td class="px-3 py-2">${esc(s["NIS"]) || "-"}</td>
+        <td class="px-3 py-2">${esc(s["NISN"]) || "-"}</td>
+        <td class="px-3 py-2">${esc(s["Sekolah"]) || "-"}</td>
+        <td class="px-3 py-2">${esc(s["Tingkat"]) || "-"}</td>
+        <td class="px-3 py-2">${esc(s["Kelas"]) || "-"}</td>
+        <td class="px-3 py-2">
+          <span class="px-2 py-0.5 rounded text-xs" style="background:${s["Status"]==='Aktif' ? '#DCFCE7' : '#FEE2E2'}; color:${s["Status"]==='Aktif' ? '#166534' : '#991B1B'};">
+            ${esc(s["Status"]) || "-"}
+          </span>
+        </td>
+        <td class="px-3 py-2">
+          <button class="detail-btn text-xs font-medium px-2 py-1 rounded" style="background:var(--navy-900); color:var(--gold-300);" data-idx="${startIdx+i}">
+            Lihat
+          </button>
+        </td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll(".detail-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const idx = parseInt(btn.getAttribute("data-idx"),10);
+        openDetailModal(filtered[idx]);
+      });
+    });
+  }
+
+  document.getElementById("pageInfo").textContent = `Halaman ${page} dari ${totalPages}`;
+  document.getElementById("prevBtn").disabled = page <= 1;
+  document.getElementById("nextBtn").disabled = page >= totalPages;
+}
+
+// ---------- detail modal ----------
+function detailRow(label, value){
+  const v = esc(value).trim();
+  if(!v) return "";
+  return `<div class="flex justify-between gap-4 py-1 border-b border-dashed" style="border-color:rgba(11,31,58,0.08);">
+    <span class="text-gray-500">${label}</span>
+    <span class="font-medium text-right" style="color:var(--navy-950);">${v}</span>
+  </div>`;
+}
+
+function openDetailModal(s){
+  if(!s) return;
+  const sections = [
+    {
+      title: "Data Pribadi",
+      rows: [
+        detailRow("Nama", s["Nama"]),
+        s["Nama Arab"] ? `<div class="flex justify-between gap-4 py-1 border-b border-dashed" style="border-color:rgba(11,31,58,0.08);"><span class="text-gray-500">Nama Arab</span><span class="font-arabic text-lg" style="color:var(--navy-950);">${esc(s["Nama Arab"])}</span></div>` : "",
+        detailRow("Gender", s["Gender"]),
+        detailRow("TTL", formatTTL(s["Tempat Lahir"], s["Tanggal Lahir"])),
+        detailRow("Golongan Darah", s["Golongan Darah"]),
+        detailRow("NIK", s["NIK"]),
+        detailRow("No. KK", s["No. KK"]),
+        detailRow("Kewarganegaraan", s["Kewarganegaraan"]),
+        detailRow("Anak Ke", s["Anak Ke"]),
+        detailRow("Jumlah Saudara", s["Jml Saudara"]),
+      ]
+    },
+    {
+      title: "Data Sekolah",
+      rows: [
+        detailRow("NIS", s["NIS"]),
+        detailRow("NISN", s["NISN"]),
+        detailRow("Markaz / Sekolah", s["Sekolah"]),
+        detailRow("Program", s["Program"]),
+        detailRow("Angkatan", s["Angkatan"]),
+        detailRow("Tingkat", s["Tingkat"]),
+        detailRow("Kelas", s["Kelas"]),
+        detailRow("Jurusan", s["Jurusan"]),
+        detailRow("Tahun Ajaran", s["Tahun Ajaran"]),
+        detailRow("Status", s["Status"]),
+        detailRow("Tanggal Masuk", s["Tanggal Masuk"]),
+        detailRow("Asrama", s["Asrama"]),
+        detailRow("Kamar", s["Kamar"]),
+      ]
+    },
+    {
+      title: "Alamat",
+      rows: [
+        detailRow("Alamat", s["Alamat"]),
+        detailRow("Kelurahan", s["Kelurahan"]),
+        detailRow("Kecamatan", s["Kecamatan"]),
+        detailRow("Kota", s["Kota"]),
+        detailRow("Provinsi", s["Provinsi"]),
+        detailRow("Kode Pos", s["Kode Pos"]),
+      ]
+    },
+    {
+      title: "Data Ayah",
+      rows: [
+        detailRow("Nama Ayah", s["Nama Ayah"]),
+        detailRow("TTL Ayah", formatTTL(s["Tempat Lahir Ayah"], s["Tanggal Lahir Ayah"])),
+        detailRow("Pendidikan", s["Pendidikan Ayah"]),
+        detailRow("Pekerjaan", s["Pekerjaan Ayah"]),
+        detailRow("Status", s["Status Ayah"]),
+        detailRow("No. HP", s["No. HP Ayah"]),
+        detailRow("Email", s["Email Ayah"]),
+      ]
+    },
+    {
+      title: "Data Ibu",
+      rows: [
+        detailRow("Nama Ibu", s["Nama Ibu"]),
+        detailRow("TTL Ibu", formatTTL(s["Tempat Lahir Ibu"], s["Tanggal Lahir Ibu"])),
+        detailRow("Pendidikan", s["Pendidikan Ibu"]),
+        detailRow("Pekerjaan", s["Pekerjaan Ibu"]),
+        detailRow("Status", s["Status Ibu"]),
+        detailRow("No. HP", s["No. HP Ibu"]),
+        detailRow("Email", s["Email Ibu"]),
+      ]
+    },
+    {
+      title: "Data Wali",
+      rows: [
+        detailRow("Nama Wali", s["Nama Wali"]),
+        detailRow("Hubungan Wali", s["Hubungan Wali"]),
+        detailRow("No. HP", s["No. HP Wali"]),
+        detailRow("Email", s["Email Wali"]),
+      ]
+    },
+  ];
+
+  const html = sections.map(sec=>{
+    const rows = sec.rows.filter(r=>r && r.trim() !== "");
+    if(rows.length === 0) return "";
+    return `<div>
+      <h4 class="detail-section-title text-sm">${sec.title}</h4>
+      <div class="space-y-0.5 text-sm">${rows.join("")}</div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("modalBody").innerHTML = html || `<p class="text-gray-400 text-sm">Tidak ada data tambahan.</p>`;
+  const modal = document.getElementById("detailModal");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
+// ---------- charts ----------
+function groupCount(list, key){
+  const map = {};
+  list.forEach(s=>{
+    const v = (s[key] && String(s[key]).trim()) || "Tidak Diketahui";
+    map[v] = (map[v] || 0) + 1;
+  });
+  return map;
+}
+
+function renderCharts(){
+  const tingkatMap = groupCount(filtered, "Tingkat");
+  const tingkatLabels = Object.keys(tingkatMap).sort(sortTingkat);
+  const tingkatData = tingkatLabels.map(l=>tingkatMap[l]);
+
+  const markazMap = groupCount(filtered, "Sekolah");
+  const markazLabels = Object.keys(markazMap).sort((a,b)=>markazMap[b]-markazMap[a]);
+  const markazData = markazLabels.map(l=>markazMap[l]);
+
+  const goldPalette = ["#123056","#1E4976","#C9A227","#B4881E","#5B7FA6","#E8C766","#0B1F3A","#8FA9C7"];
+
+  if(chartTingkat) chartTingkat.destroy();
+  chartTingkat = new Chart(document.getElementById("chartTingkat"), {
+    type: "bar",
+    data: {
+      labels: tingkatLabels,
+      datasets: [{ label:"Jumlah Siswa", data: tingkatData, backgroundColor: "#1E4976", borderRadius: 4 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
+    }
+  });
+
+  if(chartMarkaz) chartMarkaz.destroy();
+  chartMarkaz = new Chart(document.getElementById("chartMarkaz"), {
+    type: "bar",
+    data: {
+      labels: markazLabels,
+      datasets: [{ label:"Jumlah Siswa", data: markazData, backgroundColor: goldPalette, borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ beginAtZero:true, ticks:{ precision:0 } } }
+    }
+  });
+}
+
+// ---------- export ----------
+function csvEscape(val){
+  const s = esc(val);
+  if(s.includes(",") || s.includes('"') || s.includes("\n")){
+    return `"${s.replace(/"/g,'""')}"`;
+  }
+  return s;
+}
+
+function exportCSV(){
+  const header = ["No","NIS","NISN","Nama","Nama Arab","TTL"];
+  const lines = [header.join(",")];
+  filtered.forEach((s,i)=>{
+    const row = [
+      i+1,
+      s["NIS"] || "",
+      s["NISN"] || "",
+      s["Nama"] || "",
+      s["Nama Arab"] || "",
+      formatTTL(s["Tempat Lahir"], s["Tanggal Lahir"])
+    ].map(csvEscape);
+    lines.push(row.join(","));
+  });
+  const csvContent = "\uFEFF" + lines.join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `data-siswa-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ---------- init ----------
+function showError(msg){
+  const box = document.getElementById("errorBox");
+  box.innerHTML = msg;
+  box.classList.remove("hidden");
+  document.getElementById("tableBody").innerHTML =
+    `<tr><td colspan="10" class="px-3 py-6 text-center text-gray-400">Gagal memuat data.</td></tr>`;
+}
+
+let searchDebounce;
+function bindEvents(){
+  document.getElementById("searchBtn").addEventListener("click", applyFiltersAndSearch);
+  document.getElementById("searchInput").addEventListener("input", ()=>{
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(applyFiltersAndSearch, 350);
+  });
+  document.getElementById("searchInput").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") applyFiltersAndSearch();
+  });
+
+  ["filterMarkaz","filterTingkat"].forEach(id=>{
+    document.getElementById(id).addEventListener("change", ()=>{
+      populateFilterOptions();
+      applyFiltersAndSearch();
+    });
+  });
+  document.getElementById("filterKelas").addEventListener("change", applyFiltersAndSearch);
+
+  document.getElementById("resetBtn").addEventListener("click", ()=>{
+    document.getElementById("searchInput").value = "";
+    document.getElementById("filterMarkaz").value = "";
+    document.getElementById("filterTingkat").value = "";
+    document.getElementById("filterKelas").value = "";
+    populateFilterOptions();
+    applyFiltersAndSearch();
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", exportCSV);
+
+  document.getElementById("prevBtn").addEventListener("click", ()=>{ if(page>1){ page--; renderTable(); } });
+  document.getElementById("nextBtn").addEventListener("click", ()=>{ page++; renderTable(); });
+
+  document.getElementById("closeModalBtn").addEventListener("click", ()=>{
+    const modal = document.getElementById("detailModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  });
+  document.getElementById("detailModal").addEventListener("click", (e)=>{
+    if(e.target.id === "detailModal"){
+      e.currentTarget.classList.add("hidden");
+      e.currentTarget.classList.remove("flex");
+    }
+  });
+}
+
+async function init(){
+  bindEvents();
+  try{
+    allStudents = await fetchSheet();
+    if(!allStudents.length) throw new Error("Data kosong");
+    filtered = allStudents.slice();
+    renderStats();
+    populateFilterOptions();
+    applyFiltersAndSearch();
+  }catch(err){
+    console.error(err);
+    showError(`
+      <p class="font-medium mb-1">Gagal memuat data dari Google Sheets.</p>
+      <p>Pastikan spreadsheet sudah dibagikan dengan akses "Siapa saja yang memiliki link — Viewer":</p>
+      <ol class="list-decimal list-inside mt-1 space-y-0.5">
+        <li>Buka Google Sheet, klik tombol <b>Bagikan</b> di kanan atas.</li>
+        <li>Ubah akses umum menjadi <b>"Siapa saja yang memiliki link"</b> dengan peran <b>Viewer</b>.</li>
+        <li>Muat ulang (refresh) halaman ini.</li>
+      </ol>
+      <p class="mt-2 text-xs text-red-600">Detail teknis: ${esc(err.message)}</p>
+    `);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
