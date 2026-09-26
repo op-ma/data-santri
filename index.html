@@ -47,6 +47,7 @@
   table thead th{ position:sticky; top:0; z-index:10; }
   tbody tr:nth-child(even){ background:#FAF8F3; }
   tbody tr:hover{ background:#F3ECD9; }
+  tbody tr.row-clickable{ cursor:pointer; }
 
   .scrollbar-thin::-webkit-scrollbar{ height:8px; width:8px; }
   .scrollbar-thin::-webkit-scrollbar-thumb{ background:rgba(201,162,39,0.55); border-radius:4px; }
@@ -62,9 +63,14 @@
   @keyframes skeleton{ 0%{background-position:100% 50%} 100%{background-position:0 50%} }
 
   .sort-th{ cursor:pointer; user-select:none; white-space:nowrap; }
-  .sort-th:hover{ color:#fff; }
-  .sort-arrow{ display:inline-block; margin-left:4px; opacity:0.5; font-size:0.7em; }
-  .sort-th.sort-active .sort-arrow{ opacity:1; }
+  .sort-th:hover{ color:var(--navy-950); }
+  .sort-arrow{ display:inline-block; margin-left:4px; opacity:0.45; font-size:0.85em; }
+  .sort-th.sort-active{ color:var(--navy-950); }
+  .sort-th.sort-active .sort-arrow{ opacity:1; color:var(--gold-600); }
+
+  .kelas-badge{ display:inline-block; background:#EFE4C0; color:var(--navy-900); font-weight:500; border-radius:6px; padding:2px 10px; }
+
+  .row-checkbox{ width:16px; height:16px; accent-color:var(--gold-600); cursor:pointer; }
 
   .detail-row{ text-align:justify; text-justify:inter-word; }
 </style>
@@ -76,8 +82,13 @@
     <div class="absolute inset-0 islamic-pattern opacity-40"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div class="flex items-center gap-3">
+        <svg width="42" height="42" viewBox="0 0 100 100" class="flex-shrink-0">
+          <polygon points="50,4 61,32 91,32 66,50 76,80 50,62 24,80 34,50 9,32 39,32"
+            fill="none" stroke="#E8C766" stroke-width="3"/>
+          <circle cx="50" cy="50" r="14" fill="#E8C766" opacity="0.9"/>
+        </svg>
         <div>
-          <h1 class="text-white text-xl sm:text-2xl font-semibold tracking-tight">Sistem Data Santri</h1>
+          <h1 class="text-white text-xl sm:text-2xl font-semibold tracking-tight">Informasi Data Santri (Maqiis)</h1>
           <p class="text-sm" style="color:#E8C766;">Pesantren Al Ma'tuq</p>
         </div>
       </div>
@@ -130,7 +141,7 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <div>
           <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Markaz / Sekolah</label>
           <select id="filterMarkaz" class="w-full rounded-md px-3 py-2 text-sm">
@@ -147,6 +158,18 @@
           <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Kelas</label>
           <select id="filterKelas" class="w-full rounded-md px-3 py-2 text-sm">
             <option value="">Semua Kelas</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Anak Pegawai</label>
+          <select id="filterPegawai" class="w-full rounded-md px-3 py-2 text-sm">
+            <option value="">Semua</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Status Yatim</label>
+          <select id="filterYatim" class="w-full rounded-md px-3 py-2 text-sm">
+            <option value="">Semua</option>
           </select>
         </div>
       </div>
@@ -167,22 +190,20 @@
 
       <div class="overflow-x-auto scrollbar-thin">
         <table class="min-w-full text-sm">
-          <thead style="background:var(--navy-900); color:var(--gold-300);">
+          <thead style="background:#F1E9D3; color:var(--gold-600);">
             <tr>
-              <th class="px-3 py-2 text-left font-medium">No</th>
-              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="NIS">NIS<span class="sort-arrow"></span></th>
-              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="NISN">NISN<span class="sort-arrow"></span></th>
-              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="Nama">Nama<span class="sort-arrow"></span></th>
-              <th class="px-3 py-2 text-left font-medium">Nama Arab</th>
-              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="Sekolah">Markaz / Sekolah<span class="sort-arrow"></span></th>
-              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="Tingkat">Tingkat<span class="sort-arrow"></span></th>
-              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="Kelas">Kelas<span class="sort-arrow"></span></th>
-              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="Status">Status<span class="sort-arrow"></span></th>
-              <th class="px-3 py-2 text-left font-medium">Detail</th>
+              <th class="px-3 py-3 text-left font-semibold w-8"></th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide sort-th" data-sort-key="Nama">Nama Santri<span class="sort-arrow"></span></th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">NIS / NISN</th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide sort-th" data-sort-key="Kelas">Kelas<span class="sort-arrow"></span></th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Tempat, Tgl Lahir</th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Nama Ayah</th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Nama Ibu</th>
+              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Alamat</th>
             </tr>
           </thead>
           <tbody id="tableBody">
-            <tr><td colspan="10" class="px-3 py-6 text-center text-gray-400">Sedang memuat data dari Google Sheets...</td></tr>
+            <tr><td colspan="8" class="px-3 py-6 text-center text-gray-400">Sedang memuat data dari Google Sheets...</td></tr>
           </tbody>
         </table>
       </div>
@@ -220,7 +241,7 @@
     <!-- /TAB PANEL: GRAFIK & ANALITIK -->
 
     <p class="text-center text-xs text-gray-400 pb-4">
-      Data bersifat rahasia dan hanya untuk keperluan administratif internal MA Al-Ma'tuq.
+      Data bersifat rahasia dan hanya untuk keperluan administratif internal.
     </p>
   </main>
 
@@ -275,6 +296,25 @@ function formatTTL(tempat, tanggal){
   return `${t}, ${tgl}`;
 }
 
+function formatAlamatGabung(s){
+  const parts = [];
+  const alamat = esc(s["Alamat"]).trim();
+  const kelurahan = esc(s["Kelurahan"]).trim();
+  const kecamatan = esc(s["Kecamatan"]).trim();
+  const kota = esc(s["Kota"]).trim();
+  const provinsi = esc(s["Provinsi"]).trim();
+  const kodePos = esc(s["Kode Pos"]).trim();
+
+  if(alamat) parts.push(alamat);
+  if(kelurahan) parts.push(`Kel. ${kelurahan}`);
+  if(kecamatan) parts.push(`Kec. ${kecamatan}`);
+  if(kota) parts.push(`Kota ${kota}`);
+  if(provinsi) parts.push(`Prov. ${provinsi}`);
+  if(kodePos) parts.push(kodePos);
+
+  return parts.length ? parts.join(", ") : "-";
+}
+
 function sortTingkat(a,b){
   const ia = TINGKAT_ORDER.indexOf(a), ib = TINGKAT_ORDER.indexOf(b);
   if(ia===-1 && ib===-1) return String(a).localeCompare(String(b));
@@ -310,7 +350,7 @@ function updateSortIndicators(){
       arrow.textContent = sortDir === "asc" ? "▲" : "▼";
     } else {
       th.classList.remove("sort-active");
-      arrow.textContent = "";
+      arrow.textContent = "⇅";
     }
   });
 }
@@ -374,10 +414,14 @@ function populateFilterOptions(){
   const markazSel = document.getElementById("filterMarkaz");
   const tingkatSel = document.getElementById("filterTingkat");
   const kelasSel = document.getElementById("filterKelas");
+  const pegawaiSel = document.getElementById("filterPegawai");
+  const yatimSel = document.getElementById("filterYatim");
 
   const curMarkaz = markazSel.value;
   const curTingkat = tingkatSel.value;
   const curKelas = kelasSel.value;
+  const curPegawai = pegawaiSel.value;
+  const curYatim = yatimSel.value;
 
   const markazOptions = uniqueSorted(allStudents.map(s=>s["Sekolah"]));
   markazSel.innerHTML = '<option value="">Semua Markaz</option>' +
@@ -398,6 +442,16 @@ function populateFilterOptions(){
   kelasSel.innerHTML = '<option value="">Semua Kelas</option>' +
     kelasOptions.map(k=>`<option value="${k.replace(/"/g,'&quot;')}">${k}</option>`).join("");
   kelasSel.value = kelasOptions.includes(curKelas) ? curKelas : "";
+
+  const pegawaiOptions = uniqueSorted(allStudents.map(s=>s["Anak Pegawai"]));
+  pegawaiSel.innerHTML = '<option value="">Semua</option>' +
+    pegawaiOptions.map(p=>`<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join("");
+  pegawaiSel.value = pegawaiOptions.includes(curPegawai) ? curPegawai : "";
+
+  const yatimOptions = uniqueSorted(allStudents.map(s=>s["Status Yatim"]));
+  yatimSel.innerHTML = '<option value="">Semua</option>' +
+    yatimOptions.map(y=>`<option value="${y.replace(/"/g,'&quot;')}">${y}</option>`).join("");
+  yatimSel.value = yatimOptions.includes(curYatim) ? curYatim : "";
 }
 
 // ---------- filtering & search ----------
@@ -406,11 +460,15 @@ function applyFiltersAndSearch(){
   const markaz = document.getElementById("filterMarkaz").value;
   const tingkat = document.getElementById("filterTingkat").value;
   const kelas = document.getElementById("filterKelas").value;
+  const pegawai = document.getElementById("filterPegawai").value;
+  const yatim = document.getElementById("filterYatim").value;
 
   filtered = allStudents.filter(s=>{
     if(markaz && s["Sekolah"] !== markaz) return false;
     if(tingkat && s["Tingkat"] !== tingkat) return false;
     if(kelas && s["Kelas"] !== kelas) return false;
+    if(pegawai && s["Anak Pegawai"] !== pegawai) return false;
+    if(yatim && s["Status Yatim"] !== yatim) return false;
     if(q){
       const haystack = [s["Nama"], s["NISN"], s["NIK"], s["Nama Ayah"], s["Nama Ibu"]]
         .map(v=>String(v||"").toLowerCase()).join(" | ");
@@ -439,34 +497,41 @@ function renderTable(){
 
   const tbody = document.getElementById("tableBody");
   if(pageItems.length === 0){
-    tbody.innerHTML = `<tr><td colspan="10" class="px-3 py-6 text-center text-gray-400">Tidak ada data.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="px-3 py-6 text-center text-gray-400">Tidak ada data.</td></tr>`;
   } else {
-    tbody.innerHTML = pageItems.map((s, i)=>`
-      <tr class="border-b" style="border-color:rgba(11,31,58,0.06);">
-        <td class="px-3 py-2">${startIdx + i + 1}</td>
-        <td class="px-3 py-2">${esc(s["NIS"]) || "-"}</td>
-        <td class="px-3 py-2">${esc(s["NISN"]) || "-"}</td>
-        <td class="px-3 py-2 font-medium" style="color:var(--navy-950);">${esc(s["Nama"]) || "-"}</td>
-        <td class="px-3 py-2 font-arabic text-base">${esc(s["Nama Arab"]) || ""}</td>
-        <td class="px-3 py-2">${esc(s["Sekolah"]) || "-"}</td>
-        <td class="px-3 py-2">${esc(s["Tingkat"]) || "-"}</td>
-        <td class="px-3 py-2">${esc(s["Kelas"]) || "-"}</td>
-        <td class="px-3 py-2">
-          <span class="px-2 py-0.5 rounded text-xs" style="background:${s["Status"]==='Aktif' ? '#DCFCE7' : '#FEE2E2'}; color:${s["Status"]==='Aktif' ? '#166534' : '#991B1B'};">
-            ${esc(s["Status"]) || "-"}
-          </span>
+    tbody.innerHTML = pageItems.map((s, i)=>{
+      const idx = startIdx + i;
+      const kelasLabel = [esc(s["Tingkat"]), esc(s["Kelas"])].filter(Boolean).join(" ") || "-";
+      return `
+      <tr class="border-b row-clickable align-top" style="border-color:rgba(11,31,58,0.06);" data-idx="${idx}">
+        <td class="px-3 py-3" onclick="event.stopPropagation()">
+          <input type="checkbox" class="row-checkbox" data-idx="${idx}">
         </td>
-        <td class="px-3 py-2">
-          <button class="detail-btn text-xs font-medium px-2 py-1 rounded" style="background:var(--navy-900); color:var(--gold-300);" data-idx="${startIdx+i}">
-            Lihat
-          </button>
+        <td class="px-3 py-3">
+          <div class="font-semibold" style="color:var(--navy-950);">${esc(s["Nama"]) || "-"}</div>
+          ${s["Nama Arab"] ? `<div class="font-arabic text-sm text-gray-400 mt-0.5">${esc(s["Nama Arab"])}</div>` : ""}
         </td>
+        <td class="px-3 py-3">
+          <div class="font-medium" style="color:var(--navy-950);">${esc(s["NIS"]) || "-"}</div>
+          <div class="text-xs text-gray-400 mt-0.5">NISN ${esc(s["NISN"]) || "-"}</div>
+        </td>
+        <td class="px-3 py-3">
+          <span class="kelas-badge text-sm">${kelasLabel}</span>
+        </td>
+        <td class="px-3 py-3">
+          ${s["NIK"] ? `<div class="text-xs text-gray-400">${esc(s["NIK"])}</div>` : ""}
+          <div class="font-medium mt-0.5" style="color:var(--navy-950);">${formatTTL(s["Tempat Lahir"], s["Tanggal Lahir"])}</div>
+        </td>
+        <td class="px-3 py-3">${esc(s["Nama Ayah"]) || "-"}</td>
+        <td class="px-3 py-3">${esc(s["Nama Ibu"]) || "-"}</td>
+        <td class="px-3 py-3 max-w-xs">${formatAlamatGabung(s)}</td>
       </tr>
-    `).join("");
+    `;
+    }).join("");
 
-    tbody.querySelectorAll(".detail-btn").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const idx = parseInt(btn.getAttribute("data-idx"),10);
+    tbody.querySelectorAll(".row-clickable").forEach(tr=>{
+      tr.addEventListener("click", ()=>{
+        const idx = parseInt(tr.getAttribute("data-idx"),10);
         openDetailModal(filtered[idx]);
       });
     });
@@ -502,6 +567,8 @@ function openDetailModal(s){
         detailRow("Kewarganegaraan", s["Kewarganegaraan"]),
         detailRow("Anak Ke", s["Anak Ke"]),
         detailRow("Jumlah Saudara", s["Jml Saudara"]),
+        detailRow("Anak Pegawai", s["Anak Pegawai"]),
+        detailRow("Status Yatim", s["Status Yatim"]),
       ]
     },
     {
@@ -762,7 +829,7 @@ function showError(msg){
   box.innerHTML = msg;
   box.classList.remove("hidden");
   document.getElementById("tableBody").innerHTML =
-    `<tr><td colspan="10" class="px-3 py-6 text-center text-gray-400">Gagal memuat data.</td></tr>`;
+    `<tr><td colspan="8" class="px-3 py-6 text-center text-gray-400">Gagal memuat data.</td></tr>`;
 }
 
 let searchDebounce;
@@ -835,12 +902,22 @@ function bindEvents(){
     });
   });
   document.getElementById("filterKelas").addEventListener("change", applyFiltersAndSearch);
+  document.getElementById("filterPegawai").addEventListener("change", ()=>{
+    populateFilterOptions();
+    applyFiltersAndSearch();
+  });
+  document.getElementById("filterYatim").addEventListener("change", ()=>{
+    populateFilterOptions();
+    applyFiltersAndSearch();
+  });
 
   document.getElementById("resetBtn").addEventListener("click", ()=>{
     document.getElementById("searchInput").value = "";
     document.getElementById("filterMarkaz").value = "";
     document.getElementById("filterTingkat").value = "";
     document.getElementById("filterKelas").value = "";
+    document.getElementById("filterPegawai").value = "";
+    document.getElementById("filterYatim").value = "";
     populateFilterOptions();
     applyFiltersAndSearch();
   });
