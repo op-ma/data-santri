@@ -4,11 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistem Data Santri — MA Al-Ma'tuq</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B1F3A">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
   :root{
     --navy-950:#0B1F3A;
@@ -82,6 +85,15 @@
     </div>
   </header>
 
+  <!-- UPDATE BANNER (PWA) -->
+  <div id="updateBanner" class="hidden items-center justify-between gap-3 px-4 py-3 text-sm text-white"
+       style="background:var(--gold-600);">
+    <span>Versi baru aplikasi tersedia.</span>
+    <button id="refreshBtn" class="px-3 py-1 rounded-md font-medium" style="background:var(--navy-950); color:var(--gold-300);">
+      Refresh Sekarang
+    </button>
+  </div>
+
   <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
     <!-- ERROR BOX -->
@@ -131,10 +143,16 @@
       <div class="bg-white rounded-lg border p-4 sm:p-5" style="border-color:rgba(11,31,58,0.10);">
         <h3 class="text-sm font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Tingkat</h3>
         <div class="h-64"><canvas id="chartTingkat"></canvas></div>
+        <p id="chartTingkatFallback" class="hidden text-xs text-gray-400 text-center pt-4">
+          Grafik tidak dapat ditampilkan (pustaka Chart.js gagal dimuat). Periksa koneksi internet atau nonaktifkan pemblokir iklan/skrip, lalu muat ulang halaman.
+        </p>
       </div>
       <div class="bg-white rounded-lg border p-4 sm:p-5" style="border-color:rgba(11,31,58,0.10);">
         <h3 class="text-sm font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Markaz (Sekolah)</h3>
         <div class="h-64"><canvas id="chartMarkaz"></canvas></div>
+        <p id="chartMarkazFallback" class="hidden text-xs text-gray-400 text-center pt-4">
+          Grafik tidak dapat ditampilkan (pustaka Chart.js gagal dimuat). Periksa koneksi internet atau nonaktifkan pemblokir iklan/skrip, lalu muat ulang halaman.
+        </p>
       </div>
     </section>
 
@@ -524,45 +542,98 @@ function groupCount(list, key){
   return map;
 }
 
-function renderCharts(){
-  const tingkatMap = groupCount(filtered, "Tingkat");
-  const tingkatLabels = Object.keys(tingkatMap).sort(sortTingkat);
-  const tingkatData = tingkatLabels.map(l=>tingkatMap[l]);
+// Chart.js dimuat secara dinamis dengan beberapa CDN cadangan, supaya kalau satu
+// CDN diblokir jaringan/firewall/ad-blocker, grafik tetap bisa tampil dari sumber lain.
+const CHART_CDNS = [
+  "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js",
+  "https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js",
+  "https://unpkg.com/chart.js@4.4.4/dist/chart.umd.min.js",
+];
+let chartLoadPromise = null;
 
-  const markazMap = groupCount(filtered, "Sekolah");
-  const markazLabels = Object.keys(markazMap).sort((a,b)=>markazMap[b]-markazMap[a]);
-  const markazData = markazLabels.map(l=>markazMap[l]);
-
-  const goldPalette = ["#123056","#1E4976","#C9A227","#B4881E","#5B7FA6","#E8C766","#0B1F3A","#8FA9C7"];
-
-  if(chartTingkat) chartTingkat.destroy();
-  chartTingkat = new Chart(document.getElementById("chartTingkat"), {
-    type: "bar",
-    data: {
-      labels: tingkatLabels,
-      datasets: [{ label:"Jumlah Siswa", data: tingkatData, backgroundColor: "#1E4976", borderRadius: 4 }]
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
-    }
+function loadScript(url){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement("script");
+    s.src = url;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Gagal memuat: " + url));
+    document.head.appendChild(s);
   });
+}
 
-  if(chartMarkaz) chartMarkaz.destroy();
-  chartMarkaz = new Chart(document.getElementById("chartMarkaz"), {
-    type: "bar",
-    data: {
-      labels: markazLabels,
-      datasets: [{ label:"Jumlah Siswa", data: markazData, backgroundColor: goldPalette, borderRadius: 4 }]
-    },
-    options: {
-      indexAxis: "y",
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      scales:{ x:{ beginAtZero:true, ticks:{ precision:0 } } }
+async function ensureChartLoaded(){
+  if(typeof Chart !== "undefined") return true;
+  if(!chartLoadPromise){
+    chartLoadPromise = (async ()=>{
+      for(const url of CHART_CDNS){
+        try{
+          await loadScript(url);
+          if(typeof Chart !== "undefined") return true;
+        }catch(e){
+          console.warn(e.message);
+        }
+      }
+      return false;
+    })();
+  }
+  return chartLoadPromise;
+}
+
+async function renderCharts(){
+  try{
+    const ok = await ensureChartLoaded();
+    const fbTingkat = document.getElementById("chartTingkatFallback");
+    const fbMarkaz = document.getElementById("chartMarkazFallback");
+
+    if(!ok){
+      fbTingkat.classList.remove("hidden");
+      fbMarkaz.classList.remove("hidden");
+      return;
     }
-  });
+    fbTingkat.classList.add("hidden");
+    fbMarkaz.classList.add("hidden");
+
+    const tingkatMap = groupCount(filtered, "Tingkat");
+    const tingkatLabels = Object.keys(tingkatMap).sort(sortTingkat);
+    const tingkatData = tingkatLabels.map(l=>tingkatMap[l]);
+
+    const markazMap = groupCount(filtered, "Sekolah");
+    const markazLabels = Object.keys(markazMap).sort((a,b)=>markazMap[b]-markazMap[a]);
+    const markazData = markazLabels.map(l=>markazMap[l]);
+
+    const goldPalette = ["#123056","#1E4976","#C9A227","#B4881E","#5B7FA6","#E8C766","#0B1F3A","#8FA9C7"];
+
+    if(chartTingkat) chartTingkat.destroy();
+    chartTingkat = new Chart(document.getElementById("chartTingkat"), {
+      type: "bar",
+      data: {
+        labels: tingkatLabels,
+        datasets: [{ label:"Jumlah Siswa", data: tingkatData, backgroundColor: "#1E4976", borderRadius: 4 }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false} },
+        scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
+      }
+    });
+
+    if(chartMarkaz) chartMarkaz.destroy();
+    chartMarkaz = new Chart(document.getElementById("chartMarkaz"), {
+      type: "bar",
+      data: {
+        labels: markazLabels,
+        datasets: [{ label:"Jumlah Siswa", data: markazData, backgroundColor: goldPalette, borderRadius: 4 }]
+      },
+      options: {
+        indexAxis: "y",
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false} },
+        scales:{ x:{ beginAtZero:true, ticks:{ precision:0 } } }
+      }
+    });
+  }catch(e){
+    console.warn("Gagal merender grafik:", e);
+  }
 }
 
 // ---------- export ----------
@@ -680,6 +751,44 @@ async function init(){
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// ---------- PWA: service worker registration + update prompt ----------
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").then((reg) => {
+      // If there's already a waiting worker (e.g. user reopened the app), show the banner immediately
+      if (reg.waiting) {
+        showUpdateBanner(reg.waiting);
+      }
+      reg.addEventListener("updatefound", () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            showUpdateBanner(newWorker);
+          }
+        });
+      });
+    }).catch((err) => console.warn("SW registration gagal:", err));
+
+    // Reload once the new service worker takes control
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+  });
+}
+
+function showUpdateBanner(worker){
+  const banner = document.getElementById("updateBanner");
+  banner.classList.remove("hidden");
+  banner.classList.add("flex");
+  document.getElementById("refreshBtn").addEventListener("click", () => {
+    worker.postMessage("SKIP_WAITING");
+  }, { once: true });
+}
 </script>
 </body>
 </html>
