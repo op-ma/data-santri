@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistem Data Santri — MA Al-Ma'tuq</title>
+<title>Informasi Data Santri</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0B1F3A">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
@@ -60,6 +60,13 @@
 
   .skeleton{ background:linear-gradient(90deg, rgba(11,31,58,0.06) 25%, rgba(11,31,58,0.12) 37%, rgba(11,31,58,0.06) 63%); background-size:400% 100%; animation:skeleton 1.4s ease infinite; }
   @keyframes skeleton{ 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+
+  .sort-th{ cursor:pointer; user-select:none; white-space:nowrap; }
+  .sort-th:hover{ color:#fff; }
+  .sort-arrow{ display:inline-block; margin-left:4px; opacity:0.5; font-size:0.7em; }
+  .sort-th.sort-active .sort-arrow{ opacity:1; }
+
+  .detail-row{ text-align:justify; text-justify:inter-word; }
 </style>
 </head>
 <body class="min-h-screen">
@@ -71,7 +78,7 @@
       <div class="flex items-center gap-3">
         <div>
           <h1 class="text-white text-xl sm:text-2xl font-semibold tracking-tight">Sistem Data Santri</h1>
-          <p class="text-sm" style="color:#E8C766;">Pesantren Al-Ma'tuq</p>
+          <p class="text-sm" style="color:#E8C766;">Pesantren Al Ma'tuq</p>
         </div>
       </div>
       <div id="totalBadge" class="self-start sm:self-auto bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white text-sm">
@@ -163,14 +170,14 @@
           <thead style="background:var(--navy-900); color:var(--gold-300);">
             <tr>
               <th class="px-3 py-2 text-left font-medium">No</th>
-              <th class="px-3 py-2 text-left font-medium">Nama</th>
+              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="NIS">NIS<span class="sort-arrow"></span></th>
+              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="NISN">NISN<span class="sort-arrow"></span></th>
+              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="Nama">Nama<span class="sort-arrow"></span></th>
               <th class="px-3 py-2 text-left font-medium">Nama Arab</th>
-              <th class="px-3 py-2 text-left font-medium">NIS</th>
-              <th class="px-3 py-2 text-left font-medium">NISN</th>
-              <th class="px-3 py-2 text-left font-medium">Markaz / Sekolah</th>
-              <th class="px-3 py-2 text-left font-medium">Tingkat</th>
-              <th class="px-3 py-2 text-left font-medium">Kelas</th>
-              <th class="px-3 py-2 text-left font-medium">Status</th>
+              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="Sekolah">Markaz / Sekolah<span class="sort-arrow"></span></th>
+              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="Tingkat">Tingkat<span class="sort-arrow"></span></th>
+              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="Kelas">Kelas<span class="sort-arrow"></span></th>
+              <th class="px-3 py-2 text-left font-medium sort-th" data-sort-key="Status">Status<span class="sort-arrow"></span></th>
               <th class="px-3 py-2 text-left font-medium">Detail</th>
             </tr>
           </thead>
@@ -241,6 +248,8 @@ let filtered = [];
 let page = 1;
 const PAGE_SIZE = 25;
 let chartTingkat, chartMarkaz;
+let sortKey = "Nama";
+let sortDir = "asc";
 
 // ---------- helpers ----------
 function esc(str){
@@ -280,6 +289,30 @@ function sortKelas(a,b){
   const nb = isNaN(pb) ? 0 : pb;
   if(na !== nb) return na-nb;
   return String(a).localeCompare(String(b));
+}
+
+function compareByKey(a, b, key){
+  const va = a[key] !== undefined && a[key] !== null ? a[key] : "";
+  const vb = b[key] !== undefined && b[key] !== null ? b[key] : "";
+  let cmp;
+  if(key === "Tingkat") cmp = sortTingkat(va, vb);
+  else if(key === "Kelas") cmp = sortKelas(va, vb);
+  else cmp = String(va).localeCompare(String(vb), undefined, { numeric: true, sensitivity: "base" });
+  return sortDir === "desc" ? -cmp : cmp;
+}
+
+function updateSortIndicators(){
+  document.querySelectorAll(".sort-th").forEach(th=>{
+    const key = th.getAttribute("data-sort-key");
+    const arrow = th.querySelector(".sort-arrow");
+    if(key === sortKey){
+      th.classList.add("sort-active");
+      arrow.textContent = sortDir === "asc" ? "▲" : "▼";
+    } else {
+      th.classList.remove("sort-active");
+      arrow.textContent = "";
+    }
+  });
 }
 
 function uniqueSorted(arr, sortFn){
@@ -384,11 +417,12 @@ function applyFiltersAndSearch(){
       if(!haystack.includes(q)) return false;
     }
     return true;
-  }).sort((a,b)=> String(a["Nama"]||"").localeCompare(String(b["Nama"]||"")));
+  }).sort((a,b)=> compareByKey(a, b, sortKey));
 
   page = 1;
   renderTable();
   renderCharts();
+  updateSortIndicators();
 }
 
 // ---------- table ----------
@@ -410,10 +444,10 @@ function renderTable(){
     tbody.innerHTML = pageItems.map((s, i)=>`
       <tr class="border-b" style="border-color:rgba(11,31,58,0.06);">
         <td class="px-3 py-2">${startIdx + i + 1}</td>
-        <td class="px-3 py-2 font-medium" style="color:var(--navy-950);">${esc(s["Nama"]) || "-"}</td>
-        <td class="px-3 py-2 font-arabic text-base">${esc(s["Nama Arab"]) || ""}</td>
         <td class="px-3 py-2">${esc(s["NIS"]) || "-"}</td>
         <td class="px-3 py-2">${esc(s["NISN"]) || "-"}</td>
+        <td class="px-3 py-2 font-medium" style="color:var(--navy-950);">${esc(s["Nama"]) || "-"}</td>
+        <td class="px-3 py-2 font-arabic text-base">${esc(s["Nama Arab"]) || ""}</td>
         <td class="px-3 py-2">${esc(s["Sekolah"]) || "-"}</td>
         <td class="px-3 py-2">${esc(s["Tingkat"]) || "-"}</td>
         <td class="px-3 py-2">${esc(s["Kelas"]) || "-"}</td>
@@ -447,9 +481,8 @@ function renderTable(){
 function detailRow(label, value){
   const v = esc(value).trim();
   if(!v) return "";
-  return `<div class="flex justify-between gap-4 py-1 border-b border-dashed" style="border-color:rgba(11,31,58,0.08);">
-    <span class="text-gray-500">${label}</span>
-    <span class="font-medium text-right" style="color:var(--navy-950);">${v}</span>
+  return `<div class="detail-row py-1 border-b border-dashed" style="border-color:rgba(11,31,58,0.08);">
+    <span class="text-gray-500">${label}: </span><span class="font-medium" style="color:var(--navy-950);">${v}</span>
   </div>`;
 }
 
@@ -460,7 +493,7 @@ function openDetailModal(s){
       title: "Data Pribadi",
       rows: [
         detailRow("Nama", s["Nama"]),
-        s["Nama Arab"] ? `<div class="flex justify-between gap-4 py-1 border-b border-dashed" style="border-color:rgba(11,31,58,0.08);"><span class="text-gray-500">Nama Arab</span><span class="font-arabic text-lg" style="color:var(--navy-950);">${esc(s["Nama Arab"])}</span></div>` : "",
+        s["Nama Arab"] ? `<div class="detail-row py-1 border-b border-dashed" style="border-color:rgba(11,31,58,0.08);"><span class="text-gray-500">Nama Arab: </span><span class="font-arabic text-lg" style="color:var(--navy-950);">${esc(s["Nama Arab"])}</span></div>` : "",
         detailRow("Gender", s["Gender"]),
         detailRow("TTL", formatTTL(s["Tempat Lahir"], s["Tanggal Lahir"])),
         detailRow("Golongan Darah", s["Golongan Darah"]),
@@ -771,6 +804,19 @@ function switchTab(tab){
 function bindEvents(){
   document.querySelectorAll(".tab-btn").forEach(btn=>{
     btn.addEventListener("click", ()=> switchTab(btn.getAttribute("data-tab")));
+  });
+
+  document.querySelectorAll(".sort-th").forEach(th=>{
+    th.addEventListener("click", ()=>{
+      const key = th.getAttribute("data-sort-key");
+      if(sortKey === key){
+        sortDir = sortDir === "asc" ? "desc" : "asc";
+      } else {
+        sortKey = key;
+        sortDir = "asc";
+      }
+      applyFiltersAndSearch();
+    });
   });
 
   document.getElementById("searchBtn").addEventListener("click", applyFiltersAndSearch);
