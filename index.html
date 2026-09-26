@@ -102,6 +102,22 @@
     <!-- STATS -->
     <section id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></section>
 
+    <!-- TAB NAV -->
+    <div class="flex gap-1 border-b" style="border-color:rgba(11,31,58,0.10);">
+      <button type="button" id="tabBtnData" data-tab="data"
+        class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 transition-colors"
+        style="color:var(--navy-950); border-color:var(--gold-500);">
+        📋 Data Siswa
+      </button>
+      <button type="button" id="tabBtnChart" data-tab="chart"
+        class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-400 transition-colors">
+        📊 Grafik &amp; Analitik
+      </button>
+    </div>
+
+    <!-- TAB PANEL: DATA SISWA -->
+    <div id="tabPanelData" class="space-y-6">
+
     <!-- SEARCH & FILTER -->
     <section class="bg-white rounded-lg border border-navy-900/10 p-4 sm:p-5 space-y-4" style="border-color:rgba(11,31,58,0.10);">
       <div class="flex flex-col sm:flex-row gap-2">
@@ -138,30 +154,12 @@
       </div>
     </section>
 
-    <!-- CHARTS -->
-    <section class="grid md:grid-cols-2 gap-4">
-      <div class="bg-white rounded-lg border p-4 sm:p-5" style="border-color:rgba(11,31,58,0.10);">
-        <h3 class="text-sm font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Tingkat</h3>
-        <div class="h-64"><canvas id="chartTingkat"></canvas></div>
-        <p id="chartTingkatFallback" class="hidden text-xs text-gray-400 text-center pt-4">
-          Grafik tidak dapat ditampilkan (pustaka Chart.js gagal dimuat). Periksa koneksi internet atau nonaktifkan pemblokir iklan/skrip, lalu muat ulang halaman.
-        </p>
-      </div>
-      <div class="bg-white rounded-lg border p-4 sm:p-5" style="border-color:rgba(11,31,58,0.10);">
-        <h3 class="text-sm font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Markaz (Sekolah)</h3>
-        <div class="h-64"><canvas id="chartMarkaz"></canvas></div>
-        <p id="chartMarkazFallback" class="hidden text-xs text-gray-400 text-center pt-4">
-          Grafik tidak dapat ditampilkan (pustaka Chart.js gagal dimuat). Periksa koneksi internet atau nonaktifkan pemblokir iklan/skrip, lalu muat ulang halaman.
-        </p>
-      </div>
-    </section>
-
     <!-- TABLE -->
     <section class="bg-white rounded-lg border" style="border-color:rgba(11,31,58,0.10);">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 sm:p-5 border-b" style="border-color:rgba(11,31,58,0.10);">
         <p id="resultCount" class="text-sm" style="color:var(--navy-900);">Memuat data siswa...</p>
         <button id="exportBtn" class="rounded-md px-4 py-2 text-sm font-medium" style="background:var(--gold-500); color:var(--navy-950);">
-          Export Data (CSV)
+          Export Data (Excel)
         </button>
       </div>
 
@@ -193,6 +191,31 @@
         <button id="nextBtn" class="px-3 py-1.5 rounded-md border disabled:opacity-40" style="border-color:rgba(11,31,58,0.15);">Berikutnya &rarr;</button>
       </div>
     </section>
+
+    </div>
+    <!-- /TAB PANEL: DATA SISWA -->
+
+    <!-- TAB PANEL: GRAFIK & ANALITIK -->
+    <div id="tabPanelChart" class="hidden space-y-6">
+      <section class="grid md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-lg border p-4 sm:p-5" style="border-color:rgba(11,31,58,0.10);">
+          <h3 class="text-sm font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Tingkat</h3>
+          <div class="h-72"><canvas id="chartTingkat"></canvas></div>
+          <p id="chartTingkatFallback" class="hidden text-xs text-gray-400 text-center pt-4">
+            Grafik tidak dapat ditampilkan (pustaka Chart.js gagal dimuat). Periksa koneksi internet atau nonaktifkan pemblokir iklan/skrip, lalu muat ulang halaman.
+          </p>
+        </div>
+        <div class="bg-white rounded-lg border p-4 sm:p-5" style="border-color:rgba(11,31,58,0.10);">
+          <h3 class="text-sm font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Markaz (Sekolah)</h3>
+          <div class="h-72"><canvas id="chartMarkaz"></canvas></div>
+          <p id="chartMarkazFallback" class="hidden text-xs text-gray-400 text-center pt-4">
+            Grafik tidak dapat ditampilkan (pustaka Chart.js gagal dimuat). Periksa koneksi internet atau nonaktifkan pemblokir iklan/skrip, lalu muat ulang halaman.
+          </p>
+        </div>
+      </section>
+      <p class="text-xs text-gray-400">Grafik mengikuti pencarian &amp; filter yang sedang aktif di tab Data Siswa.</p>
+    </div>
+    <!-- /TAB PANEL: GRAFIK & ANALITIK -->
 
     <p class="text-center text-xs text-gray-400 pb-4">
       Data bersifat rahasia dan hanya untuk keperluan administratif internal MA Al-Ma'tuq.
@@ -637,38 +660,72 @@ async function renderCharts(){
 }
 
 // ---------- export ----------
-function csvEscape(val){
-  const s = esc(val);
-  if(s.includes(",") || s.includes('"') || s.includes("\n")){
-    return `"${s.replace(/"/g,'""')}"`;
+// File Excel (.xlsx) asli dipakai (bukan CSV) supaya kolom TIDAK pernah "menggabung"
+// jadi satu kolom saat dibuka — masalah umum kalau pakai CSV karena pengaturan
+// regional Excel (Indonesia) sering memakai titik-koma, bukan koma, sebagai pemisah kolom.
+const XLSX_CDNS = [
+  "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
+  "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+  "https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js",
+];
+let xlsxLoadPromise = null;
+
+async function ensureXLSXLoaded(){
+  if(typeof XLSX !== "undefined") return true;
+  if(!xlsxLoadPromise){
+    xlsxLoadPromise = (async ()=>{
+      for(const url of XLSX_CDNS){
+        try{
+          await loadScript(url);
+          if(typeof XLSX !== "undefined") return true;
+        }catch(e){
+          console.warn(e.message);
+        }
+      }
+      return false;
+    })();
   }
-  return s;
+  return xlsxLoadPromise;
 }
 
-function exportCSV(){
-  const header = ["No","NIS","NISN","Nama","Nama Arab","TTL"];
-  const lines = [header.join(",")];
-  filtered.forEach((s,i)=>{
-    const row = [
-      i+1,
-      s["NIS"] || "",
-      s["NISN"] || "",
-      s["Nama"] || "",
-      s["Nama Arab"] || "",
-      formatTTL(s["Tempat Lahir"], s["Tanggal Lahir"])
-    ].map(csvEscape);
-    lines.push(row.join(","));
-  });
-  const csvContent = "\uFEFF" + lines.join("\n");
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `data-siswa-${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+async function exportExcel(){
+  const btn = document.getElementById("exportBtn");
+  const originalLabel = btn.textContent;
+  if(!filtered.length){
+    alert("Tidak ada data untuk di-export (cek pencarian/filter yang sedang aktif).");
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = "Menyiapkan file...";
+  try{
+    const ok = await ensureXLSXLoaded();
+    if(!ok){
+      alert("Gagal memuat pustaka Excel. Periksa koneksi internet Anda, lalu coba lagi.");
+      return;
+    }
+
+    const rows = filtered.map((s,i)=>({
+      "No": i + 1,
+      "NIS": s["NIS"] || "",
+      "NISN": s["NISN"] || "",
+      "Nama": s["Nama"] || "",
+      "Nama Arab": s["Nama Arab"] || "",
+      "TTL": formatTTL(s["Tempat Lahir"], s["Tanggal Lahir"]),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [{ wch: 5 }, { wch: 12 }, { wch: 14 }, { wch: 30 }, { wch: 30 }, { wch: 30 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data Siswa");
+    XLSX.writeFile(wb, `data-siswa-${new Date().toISOString().slice(0,10)}.xlsx`);
+  }catch(err){
+    console.error(err);
+    alert("Terjadi kesalahan saat membuat file export.");
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
 }
 
 // ---------- init ----------
@@ -681,7 +738,46 @@ function showError(msg){
 }
 
 let searchDebounce;
+// ---------- tab switching ----------
+function switchTab(tab){
+  const panelData = document.getElementById("tabPanelData");
+  const panelChart = document.getElementById("tabPanelChart");
+  const btnData = document.getElementById("tabBtnData");
+  const btnChart = document.getElementById("tabBtnChart");
+
+  const activeStyle = { color: "var(--navy-950)", borderColor: "var(--gold-500)" };
+
+  if(tab === "chart"){
+    panelData.classList.add("hidden");
+    panelChart.classList.remove("hidden");
+    btnChart.style.color = activeStyle.color;
+    btnChart.style.borderColor = activeStyle.borderColor;
+    btnChart.classList.remove("text-gray-400", "border-transparent");
+    btnData.style.color = "";
+    btnData.style.borderColor = "transparent";
+    btnData.classList.add("text-gray-400");
+    // Chart.js needs a visible canvas to size correctly; resize after it becomes visible.
+    requestAnimationFrame(()=>{
+      if(chartTingkat) chartTingkat.resize();
+      if(chartMarkaz) chartMarkaz.resize();
+    });
+  } else {
+    panelChart.classList.add("hidden");
+    panelData.classList.remove("hidden");
+    btnData.style.color = activeStyle.color;
+    btnData.style.borderColor = activeStyle.borderColor;
+    btnData.classList.remove("text-gray-400");
+    btnChart.style.color = "";
+    btnChart.style.borderColor = "transparent";
+    btnChart.classList.add("text-gray-400");
+  }
+}
+
 function bindEvents(){
+  document.querySelectorAll(".tab-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=> switchTab(btn.getAttribute("data-tab")));
+  });
+
   document.getElementById("searchBtn").addEventListener("click", applyFiltersAndSearch);
   document.getElementById("searchInput").addEventListener("input", ()=>{
     clearTimeout(searchDebounce);
@@ -708,7 +804,7 @@ function bindEvents(){
     applyFiltersAndSearch();
   });
 
-  document.getElementById("exportBtn").addEventListener("click", exportCSV);
+  document.getElementById("exportBtn").addEventListener("click", exportExcel);
 
   document.getElementById("prevBtn").addEventListener("click", ()=>{ if(page>1){ page--; renderTable(); } });
   document.getElementById("nextBtn").addEventListener("click", ()=>{ page++; renderTable(); });
