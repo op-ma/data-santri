@@ -24,7 +24,7 @@
     --cream-50:#FAF8F3;
     --ink-900:#14213D;
   }
-  body{ font-family:'Poppins',sans-serif; background:var(--cream-50); color:var(--ink-900); }
+  body{ font-family:'Poppins',sans-serif; background:var(--cream-50); color:var(--ink-900); font-size:13px; }
   .font-arabic{ font-family:'Amiri','Poppins',sans-serif; direction:rtl; }
 
   .islamic-pattern{
@@ -56,7 +56,7 @@
   .modal-backdrop{ background:rgba(11,31,58,0.55); backdrop-filter:blur(2px); }
 
   .detail-section-title{
-    color:var(--navy-900); border-bottom:2px solid var(--gold-300); padding-bottom:4px; margin-bottom:8px; font-weight:600;
+    color:var(--navy-900); border-bottom:2px solid var(--gold-300); padding-bottom:3px; margin-bottom:6px; font-weight:600;
   }
 
   .skeleton{ background:linear-gradient(90deg, rgba(11,31,58,0.06) 25%, rgba(11,31,58,0.12) 37%, rgba(11,31,58,0.06) 63%); background-size:400% 100%; animation:skeleton 1.4s ease infinite; }
@@ -68,9 +68,9 @@
   .sort-th.sort-active{ color:var(--navy-950); }
   .sort-th.sort-active .sort-arrow{ opacity:1; color:var(--gold-600); }
 
-  .kelas-badge{ display:inline-block; background:#EFE4C0; color:var(--navy-900); font-weight:500; border-radius:6px; padding:2px 10px; }
+  .kelas-badge{ display:inline-block; background:#EFE4C0; color:var(--navy-900); font-weight:500; border-radius:5px; padding:1px 8px; font-size:0.8em; }
 
-  .row-checkbox{ width:16px; height:16px; accent-color:var(--gold-600); cursor:pointer; }
+  .row-checkbox{ width:14px; height:14px; accent-color:var(--gold-600); cursor:pointer; }
 
   .detail-row{ text-align:justify; text-justify:inter-word; }
 </style>
@@ -80,26 +80,21 @@
   <!-- HEADER -->
   <header class="relative overflow-hidden" style="background:linear-gradient(120deg, var(--navy-950), var(--blue-700));">
     <div class="absolute inset-0 islamic-pattern opacity-40"></div>
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <svg width="42" height="42" viewBox="0 0 100 100" class="flex-shrink-0">
-          <polygon points="50,4 61,32 91,32 66,50 76,80 50,62 24,80 34,50 9,32 39,32"
-            fill="none" stroke="#E8C766" stroke-width="3"/>
-          <circle cx="50" cy="50" r="14" fill="#E8C766" opacity="0.9"/>
-        </svg>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div class="flex items-center gap-2">
         <div>
-          <h1 class="text-white text-xl sm:text-2xl font-semibold tracking-tight">Informasi Data Santri (Maqiis)</h1>
-          <p class="text-sm" style="color:#E8C766;">Pesantren Al Ma'tuq</p>
+          <h1 class="text-white text-base sm:text-lg font-semibold tracking-tight">Informasi Data Santri (Maqiis)</h1>
+          <p class="text-[11px]" style="color:#E8C766;">Pesantren Al Ma'tuq</p>
         </div>
       </div>
-      <div id="totalBadge" class="self-start sm:self-auto bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white text-sm">
+      <div id="totalBadge" class="self-start sm:self-auto bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs">
         Memuat data...
       </div>
     </div>
   </header>
 
   <!-- UPDATE BANNER (PWA) -->
-  <div id="updateBanner" class="hidden items-center justify-between gap-3 px-4 py-3 text-sm text-white"
+  <div id="updateBanner" class="hidden items-center justify-between gap-3 px-4 py-2 text-xs text-white"
        style="background:var(--gold-600);">
     <span>Versi baru aplikasi tersedia.</span>
     <button id="refreshBtn" class="px-3 py-1 rounded-md font-medium" style="background:var(--navy-950); color:var(--gold-300);">
@@ -107,111 +102,112 @@
     </button>
   </div>
 
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-4">
 
     <!-- ERROR BOX -->
-    <div id="errorBox" class="hidden bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 text-sm leading-relaxed"></div>
+    <div id="errorBox" class="hidden bg-red-50 border border-red-200 text-red-800 rounded-lg p-3 text-xs leading-relaxed"></div>
 
     <!-- STATS -->
-    <section id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></section>
+    <section id="statsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3"></section>
 
     <!-- TAB NAV -->
     <div class="flex gap-1 border-b" style="border-color:rgba(11,31,58,0.10);">
       <button type="button" id="tabBtnData" data-tab="data"
-        class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 transition-colors"
+        class="tab-btn px-3 py-2 text-xs font-medium border-b-2 transition-colors"
         style="color:var(--navy-950); border-color:var(--gold-500);">
         📋 Data Siswa
       </button>
       <button type="button" id="tabBtnChart" data-tab="chart"
-        class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-400 transition-colors">
+        class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors">
         📊 Grafik &amp; Analitik
       </button>
     </div>
 
+
     <!-- TAB PANEL: DATA SISWA -->
-    <div id="tabPanelData" class="space-y-6">
+    <div id="tabPanelData" class="space-y-4">
 
     <!-- SEARCH & FILTER -->
-    <section class="bg-white rounded-lg border border-navy-900/10 p-4 sm:p-5 space-y-4" style="border-color:rgba(11,31,58,0.10);">
+    <section class="bg-white rounded-lg border border-navy-900/10 p-3 sm:p-4 space-y-3" style="border-color:rgba(11,31,58,0.10);">
       <div class="flex flex-col sm:flex-row gap-2">
         <input id="searchInput" type="text" placeholder="Cari berdasarkan Nama, NISN, NIK, Nama Ayah, atau Nama Ibu..."
-          class="flex-1 rounded-md px-3 py-2 text-sm">
-        <button id="searchBtn" class="rounded-md px-5 py-2 text-sm font-medium text-white" style="background:var(--navy-900);">
+          class="flex-1 rounded-md px-2.5 py-1.5 text-xs">
+        <button id="searchBtn" class="rounded-md px-4 py-1.5 text-xs font-medium text-white" style="background:var(--navy-900);">
           Cari
         </button>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         <div>
-          <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Markaz / Sekolah</label>
-          <select id="filterMarkaz" class="w-full rounded-md px-3 py-2 text-sm">
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Markaz / Sekolah</label>
+          <select id="filterMarkaz" class="w-full rounded-md px-2 py-1.5 text-xs">
             <option value="">Semua Markaz</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Tingkat</label>
-          <select id="filterTingkat" class="w-full rounded-md px-3 py-2 text-sm">
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Tingkat</label>
+          <select id="filterTingkat" class="w-full rounded-md px-2 py-1.5 text-xs">
             <option value="">Semua Tingkat</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Kelas</label>
-          <select id="filterKelas" class="w-full rounded-md px-3 py-2 text-sm">
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Kelas</label>
+          <select id="filterKelas" class="w-full rounded-md px-2 py-1.5 text-xs">
             <option value="">Semua Kelas</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Anak Pegawai</label>
-          <select id="filterPegawai" class="w-full rounded-md px-3 py-2 text-sm">
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Anak Pegawai</label>
+          <select id="filterPegawai" class="w-full rounded-md px-2 py-1.5 text-xs">
             <option value="">Semua</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium mb-1" style="color:var(--navy-900);">Status Yatim</label>
-          <select id="filterYatim" class="w-full rounded-md px-3 py-2 text-sm">
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Status Yatim</label>
+          <select id="filterYatim" class="w-full rounded-md px-2 py-1.5 text-xs">
             <option value="">Semua</option>
           </select>
         </div>
       </div>
 
       <div class="flex justify-end">
-        <button id="resetBtn" class="text-sm font-medium underline" style="color:var(--blue-700);">Reset filter &amp; pencarian</button>
+        <button id="resetBtn" class="text-xs font-medium underline" style="color:var(--blue-700);">Reset filter &amp; pencarian</button>
       </div>
     </section>
 
     <!-- TABLE -->
     <section class="bg-white rounded-lg border" style="border-color:rgba(11,31,58,0.10);">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 sm:p-5 border-b" style="border-color:rgba(11,31,58,0.10);">
-        <p id="resultCount" class="text-sm" style="color:var(--navy-900);">Memuat data siswa...</p>
-        <button id="exportBtn" class="rounded-md px-4 py-2 text-sm font-medium" style="background:var(--gold-500); color:var(--navy-950);">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 border-b" style="border-color:rgba(11,31,58,0.10);">
+        <p id="resultCount" class="text-xs" style="color:var(--navy-900);">Memuat data siswa...</p>
+        <button id="exportBtn" class="rounded-md px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);">
           Export Data (Excel)
         </button>
       </div>
 
       <div class="overflow-x-auto scrollbar-thin">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-xs">
           <thead style="background:#F1E9D3; color:var(--gold-600);">
             <tr>
-              <th class="px-3 py-3 text-left font-semibold w-8"></th>
-              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide sort-th" data-sort-key="Nama">Nama Santri<span class="sort-arrow"></span></th>
-              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">NIS / NISN</th>
-              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide sort-th" data-sort-key="Kelas">Kelas<span class="sort-arrow"></span></th>
-              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Tempat, Tgl Lahir</th>
-              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Nama Ayah</th>
-              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Nama Ibu</th>
-              <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Alamat</th>
+              <th class="px-2 py-2 text-left font-semibold w-6"></th>
+              <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide sort-th" data-sort-key="Nama">Nama Santri<span class="sort-arrow"></span></th>
+              <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">NIS / NISN</th>
+              <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide sort-th" data-sort-key="Kelas">Kelas<span class="sort-arrow"></span></th>
+              <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Tempat, Tgl Lahir</th>
+              <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Nama Ayah</th>
+              <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Nama Ibu</th>
+              <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Alamat</th>
             </tr>
           </thead>
           <tbody id="tableBody">
-            <tr><td colspan="8" class="px-3 py-6 text-center text-gray-400">Sedang memuat data dari Google Sheets...</td></tr>
+            <tr><td colspan="8" class="px-3 py-5 text-center text-gray-400">Sedang memuat data dari Google Sheets...</td></tr>
           </tbody>
         </table>
       </div>
 
-      <div class="flex items-center justify-between p-4 sm:p-5 border-t text-sm" style="border-color:rgba(11,31,58,0.10);">
-        <button id="prevBtn" class="px-3 py-1.5 rounded-md border disabled:opacity-40" style="border-color:rgba(11,31,58,0.15);">&larr; Sebelumnya</button>
+      <div class="flex items-center justify-between p-3 sm:p-4 border-t text-xs" style="border-color:rgba(11,31,58,0.10);">
+        <button id="prevBtn" class="px-2.5 py-1 rounded-md border disabled:opacity-40" style="border-color:rgba(11,31,58,0.15);">&larr; Sebelumnya</button>
         <span id="pageInfo" style="color:var(--navy-900);"></span>
-        <button id="nextBtn" class="px-3 py-1.5 rounded-md border disabled:opacity-40" style="border-color:rgba(11,31,58,0.15);">Berikutnya &rarr;</button>
+        <button id="nextBtn" class="px-2.5 py-1 rounded-md border disabled:opacity-40" style="border-color:rgba(11,31,58,0.15);">Berikutnya &rarr;</button>
       </div>
     </section>
 
@@ -219,40 +215,40 @@
     <!-- /TAB PANEL: DATA SISWA -->
 
     <!-- TAB PANEL: GRAFIK & ANALITIK -->
-    <div id="tabPanelChart" class="hidden space-y-6">
-      <section class="grid md:grid-cols-2 gap-4">
-        <div class="bg-white rounded-lg border p-4 sm:p-5" style="border-color:rgba(11,31,58,0.10);">
-          <h3 class="text-sm font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Tingkat</h3>
-          <div class="h-72"><canvas id="chartTingkat"></canvas></div>
-          <p id="chartTingkatFallback" class="hidden text-xs text-gray-400 text-center pt-4">
+    <div id="tabPanelChart" class="hidden space-y-4">
+      <section class="grid md:grid-cols-2 gap-3">
+        <div class="bg-white rounded-lg border p-3 sm:p-4" style="border-color:rgba(11,31,58,0.10);">
+          <h3 class="text-xs font-semibold mb-2" style="color:var(--navy-900);">Jumlah Siswa per Tingkat</h3>
+          <div class="h-56"><canvas id="chartTingkat"></canvas></div>
+          <p id="chartTingkatFallback" class="hidden text-[11px] text-gray-400 text-center pt-3">
             Grafik tidak dapat ditampilkan (pustaka Chart.js gagal dimuat). Periksa koneksi internet atau nonaktifkan pemblokir iklan/skrip, lalu muat ulang halaman.
           </p>
         </div>
-        <div class="bg-white rounded-lg border p-4 sm:p-5" style="border-color:rgba(11,31,58,0.10);">
-          <h3 class="text-sm font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Markaz (Sekolah)</h3>
-          <div class="h-72"><canvas id="chartMarkaz"></canvas></div>
-          <p id="chartMarkazFallback" class="hidden text-xs text-gray-400 text-center pt-4">
+        <div class="bg-white rounded-lg border p-3 sm:p-4" style="border-color:rgba(11,31,58,0.10);">
+          <h3 class="text-xs font-semibold mb-2" style="color:var(--navy-900);">Jumlah Siswa per Markaz (Sekolah)</h3>
+          <div class="h-56"><canvas id="chartMarkaz"></canvas></div>
+          <p id="chartMarkazFallback" class="hidden text-[11px] text-gray-400 text-center pt-3">
             Grafik tidak dapat ditampilkan (pustaka Chart.js gagal dimuat). Periksa koneksi internet atau nonaktifkan pemblokir iklan/skrip, lalu muat ulang halaman.
           </p>
         </div>
       </section>
-      <p class="text-xs text-gray-400">Grafik mengikuti pencarian &amp; filter yang sedang aktif di tab Data Siswa.</p>
+      <p class="text-[11px] text-gray-400">Grafik mengikuti pencarian &amp; filter yang sedang aktif di tab Data Siswa.</p>
     </div>
     <!-- /TAB PANEL: GRAFIK & ANALITIK -->
 
-    <p class="text-center text-xs text-gray-400 pb-4">
+    <p class="text-center text-[11px] text-gray-400 pb-3">
       Data bersifat rahasia dan hanya untuk keperluan administratif internal.
     </p>
   </main>
 
   <!-- DETAIL MODAL -->
   <div id="detailModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg w-full max-w-3xl max-h-[85vh] overflow-y-auto scrollbar-thin">
-      <div class="flex items-center justify-between px-5 py-4 border-b sticky top-0 bg-white" style="border-color:rgba(11,31,58,0.10);">
-        <h3 class="font-semibold" style="color:var(--navy-900);">Detail Data Siswa</h3>
+    <div class="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] overflow-y-auto scrollbar-thin text-xs">
+      <div class="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-white" style="border-color:rgba(11,31,58,0.10);">
+        <h3 class="text-sm font-semibold" style="color:var(--navy-900);">Detail Data Siswa</h3>
         <button id="closeModalBtn" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
       </div>
-      <div id="modalBody" class="p-5 space-y-5"></div>
+      <div id="modalBody" class="p-4 space-y-4"></div>
     </div>
   </div>
 
@@ -400,9 +396,9 @@ function renderStats(){
   ];
 
   document.getElementById("statsGrid").innerHTML = cards.map(c => `
-    <div class="stat-card rounded-lg p-4">
-      <p class="text-2xl font-semibold" style="color:var(--navy-950);">${c.value}</p>
-      <p class="text-xs text-gray-500 mt-1">${c.label}</p>
+    <div class="stat-card rounded-lg p-3">
+      <p class="text-lg font-semibold" style="color:var(--navy-950);">${c.value}</p>
+      <p class="text-[11px] text-gray-500 mt-0.5">${c.label}</p>
     </div>
   `).join("");
 
@@ -497,34 +493,34 @@ function renderTable(){
 
   const tbody = document.getElementById("tableBody");
   if(pageItems.length === 0){
-    tbody.innerHTML = `<tr><td colspan="8" class="px-3 py-6 text-center text-gray-400">Tidak ada data.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="px-3 py-5 text-center text-gray-400">Tidak ada data.</td></tr>`;
   } else {
     tbody.innerHTML = pageItems.map((s, i)=>{
       const idx = startIdx + i;
       const kelasLabel = [esc(s["Tingkat"]), esc(s["Kelas"])].filter(Boolean).join(" ") || "-";
       return `
       <tr class="border-b row-clickable align-top" style="border-color:rgba(11,31,58,0.06);" data-idx="${idx}">
-        <td class="px-3 py-3" onclick="event.stopPropagation()">
+        <td class="px-2 py-2" onclick="event.stopPropagation()">
           <input type="checkbox" class="row-checkbox" data-idx="${idx}">
         </td>
-        <td class="px-3 py-3">
+        <td class="px-2 py-2">
           <div class="font-semibold" style="color:var(--navy-950);">${esc(s["Nama"]) || "-"}</div>
-          ${s["Nama Arab"] ? `<div class="font-arabic text-sm text-gray-400 mt-0.5">${esc(s["Nama Arab"])}</div>` : ""}
+          ${s["Nama Arab"] ? `<div class="font-arabic text-xs text-gray-400 mt-0.5">${esc(s["Nama Arab"])}</div>` : ""}
         </td>
-        <td class="px-3 py-3">
+        <td class="px-2 py-2">
           <div class="font-medium" style="color:var(--navy-950);">${esc(s["NIS"]) || "-"}</div>
-          <div class="text-xs text-gray-400 mt-0.5">NISN ${esc(s["NISN"]) || "-"}</div>
+          <div class="text-[11px] text-gray-400 mt-0.5">NISN ${esc(s["NISN"]) || "-"}</div>
         </td>
-        <td class="px-3 py-3">
-          <span class="kelas-badge text-sm">${kelasLabel}</span>
+        <td class="px-2 py-2">
+          <span class="kelas-badge">${kelasLabel}</span>
         </td>
-        <td class="px-3 py-3">
-          ${s["NIK"] ? `<div class="text-xs text-gray-400">${esc(s["NIK"])}</div>` : ""}
+        <td class="px-2 py-2">
+          ${s["NIK"] ? `<div class="text-[11px] text-gray-400">${esc(s["NIK"])}</div>` : ""}
           <div class="font-medium mt-0.5" style="color:var(--navy-950);">${formatTTL(s["Tempat Lahir"], s["Tanggal Lahir"])}</div>
         </td>
-        <td class="px-3 py-3">${esc(s["Nama Ayah"]) || "-"}</td>
-        <td class="px-3 py-3">${esc(s["Nama Ibu"]) || "-"}</td>
-        <td class="px-3 py-3 max-w-xs">${formatAlamatGabung(s)}</td>
+        <td class="px-2 py-2">${esc(s["Nama Ayah"]) || "-"}</td>
+        <td class="px-2 py-2">${esc(s["Nama Ibu"]) || "-"}</td>
+        <td class="px-2 py-2 max-w-[220px]">${formatAlamatGabung(s)}</td>
       </tr>
     `;
     }).join("");
@@ -639,12 +635,12 @@ function openDetailModal(s){
     const rows = sec.rows.filter(r=>r && r.trim() !== "");
     if(rows.length === 0) return "";
     return `<div>
-      <h4 class="detail-section-title text-sm">${sec.title}</h4>
-      <div class="space-y-0.5 text-sm">${rows.join("")}</div>
+      <h4 class="detail-section-title text-xs">${sec.title}</h4>
+      <div class="space-y-0.5 text-xs">${rows.join("")}</div>
     </div>`;
   }).join("");
 
-  document.getElementById("modalBody").innerHTML = html || `<p class="text-gray-400 text-sm">Tidak ada data tambahan.</p>`;
+  document.getElementById("modalBody").innerHTML = html || `<p class="text-gray-400 text-xs">Tidak ada data tambahan.</p>`;
   const modal = document.getElementById("detailModal");
   modal.classList.remove("hidden");
   modal.classList.add("flex");
