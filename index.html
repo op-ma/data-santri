@@ -47,7 +47,8 @@
   table thead th{ position:sticky; top:0; z-index:10; }
   tbody tr:nth-child(even){ background:#FAF8F3; }
   tbody tr:hover{ background:#F3ECD9; }
-  tbody tr.row-clickable{ cursor:pointer; }
+  .no-cell{ cursor:pointer; color:var(--blue-700); font-weight:600; text-decoration:underline; text-decoration-color:var(--gold-500); text-underline-offset:3px; }
+  .no-cell:hover{ background:#F3ECD9; }
 
   .scrollbar-thin::-webkit-scrollbar{ height:8px; width:8px; }
   .scrollbar-thin::-webkit-scrollbar-thumb{ background:rgba(201,162,39,0.55); border-radius:4px; }
@@ -70,7 +71,6 @@
 
   .kelas-badge{ display:inline-block; background:#EFE4C0; color:var(--navy-900); font-weight:500; border-radius:5px; padding:1px 8px; font-size:0.8em; }
 
-  .row-checkbox{ width:14px; height:14px; accent-color:var(--gold-600); cursor:pointer; }
 
   .detail-row{ text-align:justify; text-justify:inter-word; }
 </style>
@@ -188,7 +188,7 @@
         <table class="min-w-full text-xs">
           <thead style="background:#F1E9D3; color:var(--gold-600);">
             <tr>
-              <th class="px-2 py-2 text-left font-semibold w-6"></th>
+              <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide w-8">No</th>
               <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide sort-th" data-sort-key="Nama">Nama Santri<span class="sort-arrow"></span></th>
               <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">NIS / NISN</th>
               <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide sort-th" data-sort-key="Kelas">Kelas<span class="sort-arrow"></span></th>
@@ -301,14 +301,19 @@ function formatAlamatGabung(s){
   const provinsi = esc(s["Provinsi"]).trim();
   const kodePos = esc(s["Kode Pos"]).trim();
 
+  // Jika data "Kota" mengandung kata "kota" -> wilayah perkotaan -> "Kel."; selain itu -> "Desa"
+  const isKota = /\bkota\b/i.test(kota);
+  const labelKel = isKota ? "Kel." : "Desa";
+
   if(alamat) parts.push(alamat);
-  if(kelurahan) parts.push(`Kel. ${kelurahan}`);
+  if(kelurahan) parts.push(`${labelKel} ${kelurahan}`);
   if(kecamatan) parts.push(`Kec. ${kecamatan}`);
-  if(kota) parts.push(`Kota ${kota}`);
+  // Nilai kota ditampilkan apa adanya (sudah memuat kata "Kota"/"Kab."), tanpa awalan tambahan
+  if(kota) parts.push(kota);
   if(provinsi) parts.push(`Prov. ${provinsi}`);
   if(kodePos) parts.push(kodePos);
 
-  return parts.length ? parts.join(", ") : "-";
+  return parts.length ? parts.join(", ").toUpperCase() : "-";
 }
 
 function sortTingkat(a,b){
@@ -497,12 +502,10 @@ function renderTable(){
   } else {
     tbody.innerHTML = pageItems.map((s, i)=>{
       const idx = startIdx + i;
-      const kelasLabel = [esc(s["Tingkat"]), esc(s["Kelas"])].filter(Boolean).join(" ") || "-";
+      const kelasLabel = esc(s["Kelas"]) || "-";
       return `
-      <tr class="border-b row-clickable align-top" style="border-color:rgba(11,31,58,0.06);" data-idx="${idx}">
-        <td class="px-2 py-2" onclick="event.stopPropagation()">
-          <input type="checkbox" class="row-checkbox" data-idx="${idx}">
-        </td>
+      <tr class="border-b align-top" style="border-color:rgba(11,31,58,0.06);">
+        <td class="px-2 py-2 no-cell" data-idx="${idx}" title="Klik untuk melihat detail siswa">${idx + 1}</td>
         <td class="px-2 py-2">
           <div class="font-semibold" style="color:var(--navy-950);">${esc(s["Nama"]) || "-"}</div>
           ${s["Nama Arab"] ? `<div class="font-arabic text-xs text-gray-400 mt-0.5">${esc(s["Nama Arab"])}</div>` : ""}
@@ -525,7 +528,7 @@ function renderTable(){
     `;
     }).join("");
 
-    tbody.querySelectorAll(".row-clickable").forEach(tr=>{
+    tbody.querySelectorAll(".no-cell").forEach(tr=>{
       tr.addEventListener("click", ()=>{
         const idx = parseInt(tr.getAttribute("data-idx"),10);
         openDetailModal(filtered[idx]);
