@@ -232,7 +232,39 @@
           </p>
         </div>
       </section>
-      <p class="text-[11px] text-gray-400">Grafik mengikuti pencarian &amp; filter yang sedang aktif di tab Data Siswa.</p>
+
+      <!-- Jenis kelamin per tingkat & kategori sekolah -->
+      <section class="grid md:grid-cols-2 gap-3">
+        <div class="bg-white rounded-lg border p-3 sm:p-4" style="border-color:rgba(11,31,58,0.10);">
+          <h3 class="text-xs font-semibold mb-2" style="color:var(--navy-900);">Jumlah Siswa per Tingkat berdasarkan Jenis Kelamin</h3>
+          <div class="h-64"><canvas id="chartGender"></canvas></div>
+          <p id="chartGenderFallback" class="hidden text-[11px] text-gray-400 text-center pt-3">
+            Grafik tidak dapat ditampilkan (pustaka Chart.js gagal dimuat). Periksa koneksi internet atau nonaktifkan pemblokir iklan/skrip, lalu muat ulang halaman.
+          </p>
+        </div>
+        <div class="bg-white rounded-lg border p-3 sm:p-4" style="border-color:rgba(11,31,58,0.10);">
+          <h3 class="text-xs font-semibold mb-2" style="color:var(--navy-900);">Jumlah Siswa per Kategori Sekolah</h3>
+          <div class="h-64"><canvas id="chartKategori"></canvas></div>
+          <p id="chartKategoriFallback" class="hidden text-[11px] text-gray-400 text-center pt-3">
+            Grafik tidak dapat ditampilkan (pustaka Chart.js gagal dimuat). Periksa koneksi internet atau nonaktifkan pemblokir iklan/skrip, lalu muat ulang halaman.
+          </p>
+        </div>
+      </section>
+
+      <!-- Kelas per tingkat -->
+      <section class="bg-white rounded-lg border p-3 sm:p-4" style="border-color:rgba(11,31,58,0.10);">
+        <h3 class="text-xs font-semibold mb-3" style="color:var(--navy-900);">Jumlah Siswa per Kelas (dipisah per Tingkat)</h3>
+        <div id="kelasPerTingkat" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+      </section>
+
+      <!-- Asal daerah per tingkat -->
+      <section class="bg-white rounded-lg border p-3 sm:p-4" style="border-color:rgba(11,31,58,0.10);">
+        <h3 class="text-xs font-semibold mb-1" style="color:var(--navy-900);">Asal Daerah per Tingkat (Jumlah Kota &amp; Provinsi)</h3>
+        <p class="text-[11px] text-gray-400 mb-3">Klik "Rincian" untuk melihat daftar provinsi dan kota beserta jumlah siswanya.</p>
+        <div id="asalPerTingkat" class="overflow-x-auto scrollbar-thin"></div>
+      </section>
+
+      <p class="text-[11px] text-gray-400">Semua grafik dan tabel di tab ini mengikuti pencarian &amp; filter yang sedang aktif di tab Data Siswa.</p>
     </div>
     <!-- /TAB PANEL: GRAFIK & ANALITIK -->
 
@@ -264,7 +296,7 @@ let allStudents = [];
 let filtered = [];
 let page = 1;
 const PAGE_SIZE = 25;
-let chartTingkat, chartMarkaz;
+let chartTingkat, chartMarkaz, chartGender, chartKategori;
 let sortKey = "Nama";
 let sortDir = "asc";
 
@@ -696,19 +728,176 @@ async function ensureChartLoaded(){
   return chartLoadPromise;
 }
 
+// ---------- analitik tambahan (tab Grafik) ----------
+function escHtml(v){
+  return String(v===undefined||v===null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function normGender(v){
+  const t = String(v||"").trim().toLowerCase();
+  if(t === "l" || t.startsWith("laki")) return "Laki-laki";
+  if(t === "p" || t.startsWith("perempuan")) return "Perempuan";
+  return "Tidak Diketahui";
+}
+
+// Kategori sekolah = kolom Program (TK/SD/MTs/MA); jika kosong, ambil kata pertama nama Sekolah
+const KATEGORI_ORDER = ["TK","SD","MTs","MA"];
+function getKategori(s){
+  const prog = String(s["Program"]||"").trim();
+  if(prog) return prog;
+  const first = String(s["Sekolah"]||"").trim().split(/\s+/)[0];
+  return first || "Tidak Diketahui";
+}
+function sortKategori(a,b){
+  const ia = KATEGORI_ORDER.indexOf(a), ib = KATEGORI_ORDER.indexOf(b);
+  if(ia===-1 && ib===-1) return String(a).localeCompare(String(b));
+  if(ia===-1) return 1;
+  if(ib===-1) return -1;
+  return ia-ib;
+}
+
+const NO_KELAS = "Belum ada kelas";
+
+function renderKelasPerTingkat(){
+  const box = document.getElementById("kelasPerTingkat");
+  if(!box) return;
+  if(!filtered.length){
+    box.innerHTML = '<p class="text-xs text-gray-400">Tidak ada data.</p>';
+    return;
+  }
+  const byTingkat = {};
+  filtered.forEach(s=>{
+    const t = (String(s["Tingkat"]||"").trim()) || "Tidak Diketahui";
+    const k = (String(s["Kelas"]||"").trim()) || NO_KELAS;
+    if(!byTingkat[t]) byTingkat[t] = {total:0, kelas:{}};
+    byTingkat[t].total++;
+    if(!byTingkat[t].kelas[k]) byTingkat[t].kelas[k] = {n:0, L:0, P:0};
+    const c = byTingkat[t].kelas[k];
+    c.n++;
+    const g = normGender(s["Gender"]);
+    if(g === "Laki-laki") c.L++; else if(g === "Perempuan") c.P++;
+  });
+
+  box.innerHTML = Object.keys(byTingkat).sort(sortTingkat).map(t=>{
+    const info = byTingkat[t];
+    const kelasKeys = Object.keys(info.kelas).sort((a,b)=>{
+      if(a === NO_KELAS) return 1;
+      if(b === NO_KELAS) return -1;
+      return sortKelas(a,b);
+    });
+    const max = Math.max(...kelasKeys.map(k=>info.kelas[k].n));
+    const rows = kelasKeys.map(k=>{
+      const c = info.kelas[k];
+      const w = Math.max(4, Math.round(c.n / max * 100));
+      return `<div class="py-1">
+        <div class="flex items-baseline justify-between text-xs">
+          <span class="font-medium" style="color:var(--navy-950);">${escHtml(k)}</span>
+          <span class="text-gray-500">${c.n} <span class="text-[10px]">(L ${c.L} · P ${c.P})</span></span>
+        </div>
+        <div class="h-1.5 rounded bg-gray-100 mt-0.5"><div class="h-1.5 rounded" style="width:${w}%; background:linear-gradient(90deg,var(--blue-700),var(--gold-500));"></div></div>
+      </div>`;
+    }).join("");
+    return `<div class="rounded-lg border p-3" style="border-color:rgba(11,31,58,0.10); background:var(--cream-50);">
+      <div class="flex items-center justify-between mb-1 pb-1 border-b" style="border-color:var(--gold-300);">
+        <h4 class="text-xs font-semibold" style="color:var(--navy-900);">Tingkat ${escHtml(t)}</h4>
+        <span class="text-[11px] text-gray-500">${info.total} siswa · ${kelasKeys.length} kelas</span>
+      </div>
+      ${rows}
+    </div>`;
+  }).join("");
+}
+
+function renderAsalPerTingkat(){
+  const box = document.getElementById("asalPerTingkat");
+  if(!box) return;
+  if(!filtered.length){
+    box.innerHTML = '<p class="text-xs text-gray-400">Tidak ada data.</p>';
+    return;
+  }
+  const norm = v => String(v||"").trim().toUpperCase();
+  const build = list => {
+    const prov = {}, kota = {};
+    let kosongProv = 0, kosongKota = 0;
+    list.forEach(s=>{
+      const p = norm(s["Provinsi"]), k = norm(s["Kota"]);
+      if(p) prov[p] = (prov[p]||0)+1; else kosongProv++;
+      if(k) kota[k] = (kota[k]||0)+1; else kosongKota++;
+    });
+    return {total:list.length, prov, kota, kosongProv, kosongKota};
+  };
+
+  const groups = {};
+  filtered.forEach(s=>{
+    const t = (String(s["Tingkat"]||"").trim()) || "Tidak Diketahui";
+    (groups[t] = groups[t] || []).push(s);
+  });
+  const tingkatKeys = Object.keys(groups).sort(sortTingkat);
+  const stats = tingkatKeys.map(t=>({t, ...build(groups[t])}));
+  const all = {t:"Semua Tingkat", ...build(filtered)};
+
+  const sortedList = (obj, kosong) => {
+    const items = Object.entries(obj).sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0]))
+      .map(([name,n])=>`<li class="flex justify-between gap-2"><span>${escHtml(name)}</span><span class="text-gray-500">${n}</span></li>`);
+    if(kosong) items.push(`<li class="flex justify-between gap-2 text-gray-400"><span>(Belum diisi)</span><span>${kosong}</span></li>`);
+    return `<ul class="text-xs space-y-0.5">${items.join("")}</ul>`;
+  };
+
+  const rowHtml = (st, i, isAll) => `
+    <tr class="border-b ${isAll?'font-semibold':''}" style="border-color:rgba(11,31,58,0.06); ${isAll?'background:#F3ECD9;':''}">
+      <td class="px-2 py-1.5">${escHtml(st.t)}</td>
+      <td class="px-2 py-1.5">${st.total}</td>
+      <td class="px-2 py-1.5">${Object.keys(st.prov).length}</td>
+      <td class="px-2 py-1.5">${Object.keys(st.kota).length}</td>
+      <td class="px-2 py-1.5"><button type="button" class="asal-toggle text-[11px] font-medium px-2 py-0.5 rounded" style="background:var(--navy-900); color:var(--gold-300);" data-asal="${i}">Rincian</button></td>
+    </tr>
+    <tr id="asalDetail${i}" class="hidden" style="background:var(--cream-50);">
+      <td colspan="5" class="px-3 py-2">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div><p class="text-[11px] font-semibold mb-1" style="color:var(--navy-900);">Provinsi asal</p>${sortedList(st.prov, st.kosongProv)}</div>
+          <div><p class="text-[11px] font-semibold mb-1" style="color:var(--navy-900);">Kota / Kabupaten asal</p>${sortedList(st.kota, st.kosongKota)}</div>
+        </div>
+      </td>
+    </tr>`;
+
+  const rows = [all, ...stats].map((st,i)=>rowHtml(st, i, i===0)).join("");
+  box.innerHTML = `<table class="min-w-full text-sm">
+    <thead style="background:var(--navy-900); color:var(--gold-300);">
+      <tr>
+        <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Tingkat</th>
+        <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Siswa</th>
+        <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Jumlah Provinsi</th>
+        <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Jumlah Kota</th>
+        <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Detail</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  box.querySelectorAll(".asal-toggle").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const row = document.getElementById("asalDetail" + btn.getAttribute("data-asal"));
+      const hidden = row.classList.toggle("hidden");
+      btn.textContent = hidden ? "Rincian" : "Tutup";
+    });
+  });
+}
+
 async function renderCharts(){
+  try{ renderKelasPerTingkat(); }catch(e){ console.warn("Gagal render kelas per tingkat:", e); }
+  try{ renderAsalPerTingkat(); }catch(e){ console.warn("Gagal render asal per tingkat:", e); }
   try{
     const ok = await ensureChartLoaded();
     const fbTingkat = document.getElementById("chartTingkatFallback");
     const fbMarkaz = document.getElementById("chartMarkazFallback");
+    const fbGender = document.getElementById("chartGenderFallback");
+    const fbKategori = document.getElementById("chartKategoriFallback");
+    const fbAll = [fbTingkat, fbMarkaz, fbGender, fbKategori];
 
     if(!ok){
-      fbTingkat.classList.remove("hidden");
-      fbMarkaz.classList.remove("hidden");
+      fbAll.forEach(el=>el.classList.remove("hidden"));
       return;
     }
-    fbTingkat.classList.add("hidden");
-    fbMarkaz.classList.add("hidden");
+    fbAll.forEach(el=>el.classList.add("hidden"));
 
     const tingkatMap = groupCount(filtered, "Tingkat");
     const tingkatLabels = Object.keys(tingkatMap).sort(sortTingkat);
@@ -746,6 +935,50 @@ async function renderCharts(){
         responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{display:false} },
         scales:{ x:{ beginAtZero:true, ticks:{ precision:0 } } }
+      }
+    });
+
+    // --- Jumlah siswa per tingkat berdasarkan jenis kelamin ---
+    const gMap = {};
+    filtered.forEach(s=>{
+      const t = (String(s["Tingkat"]||"").trim()) || "Tidak Diketahui";
+      const g = normGender(s["Gender"]);
+      if(!gMap[t]) gMap[t] = {"Laki-laki":0, "Perempuan":0, "Tidak Diketahui":0};
+      gMap[t][g]++;
+    });
+    const gLabels = Object.keys(gMap).sort(sortTingkat);
+    const gDatasets = [
+      { label:"Laki-laki", data: gLabels.map(l=>gMap[l]["Laki-laki"]), backgroundColor:"#1E4976", borderRadius:4 },
+      { label:"Perempuan", data: gLabels.map(l=>gMap[l]["Perempuan"]), backgroundColor:"#C9A227", borderRadius:4 },
+    ];
+    if(gLabels.some(l=>gMap[l]["Tidak Diketahui"] > 0)){
+      gDatasets.push({ label:"Tidak Diketahui", data: gLabels.map(l=>gMap[l]["Tidak Diketahui"]), backgroundColor:"#9CA3AF", borderRadius:4 });
+    }
+    if(chartGender) chartGender.destroy();
+    chartGender = new Chart(document.getElementById("chartGender"), {
+      type: "bar",
+      data: { labels: gLabels, datasets: gDatasets },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:true, position:"bottom" } },
+        scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
+      }
+    });
+
+    // --- Jumlah siswa per kategori sekolah ---
+    const kMap = {};
+    filtered.forEach(s=>{ const k = getKategori(s); kMap[k] = (kMap[k]||0)+1; });
+    const kKeys = Object.keys(kMap).sort(sortKategori);
+    if(chartKategori) chartKategori.destroy();
+    chartKategori = new Chart(document.getElementById("chartKategori"), {
+      type: "doughnut",
+      data: {
+        labels: kKeys.map(k=>`${k} (${kMap[k]})`),
+        datasets: [{ data: kKeys.map(k=>kMap[k]), backgroundColor: goldPalette, borderColor:"#fff", borderWidth:2 }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:true, position:"right" } }
       }
     });
   }catch(e){
@@ -854,6 +1087,8 @@ function switchTab(tab){
     requestAnimationFrame(()=>{
       if(chartTingkat) chartTingkat.resize();
       if(chartMarkaz) chartMarkaz.resize();
+      if(chartGender) chartGender.resize();
+      if(chartKategori) chartKategori.resize();
     });
   } else {
     panelChart.classList.add("hidden");
