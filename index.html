@@ -582,6 +582,17 @@ function detailRow(label, value){
   </div>`;
 }
 
+function coordRow(lat, lng){
+  const la = esc(lat).trim(), lo = esc(lng).trim();
+  if(!la && !lo) return "";
+  const value = [la, lo].filter(Boolean).join(", ");
+  const mapsUrl = (la && lo) ? `https://www.google.com/maps?q=${encodeURIComponent(la)},${encodeURIComponent(lo)}` : "";
+  return `<div class="detail-row py-1 border-b border-dashed" style="border-color:rgba(11,31,58,0.08);">
+    <span class="text-gray-500">Koordinat (Lat, Long): </span><span class="font-medium" style="color:var(--navy-950);">${esc(value)}</span>
+    ${mapsUrl ? `<a href="${mapsUrl}" target="_blank" rel="noopener" class="ml-2 text-[11px] underline" style="color:var(--blue-700);">Lihat di peta</a>` : ""}
+  </div>`;
+}
+
 function openDetailModal(s){
   if(!s) return;
   const sections = [
@@ -595,11 +606,18 @@ function openDetailModal(s){
         detailRow("Golongan Darah", s["Golongan Darah"]),
         detailRow("NIK", s["NIK"]),
         detailRow("No. KK", s["No. KK"]),
+        detailRow("No. KIP", s["No. KIP"]),
         detailRow("Kewarganegaraan", s["Kewarganegaraan"]),
         detailRow("Anak Ke", s["Anak Ke"]),
         detailRow("Jumlah Saudara", s["Jml Saudara"]),
         detailRow("Anak Pegawai", s["Anak Pegawai"]),
+        detailRow("Nama Pegawai", s["Nama Pegawai"]),
+        detailRow("Yayasan / Mahad Lain", s["Yayasan / Mahad Lain"]),
         detailRow("Status Yatim", s["Status Yatim"]),
+        detailRow("Jenis Yatim", s["Jenis Yatim"]),
+        detailRow("Kebutuhan Khusus", s["Kebutuhan Khusus"]),
+        detailRow("Disabilitas", s["Disabilitas"]),
+        detailRow("Imunisasi", s["Imunisasi"]),
       ]
     },
     {
@@ -621,47 +639,79 @@ function openDetailModal(s){
       ]
     },
     {
+      title: "Transportasi & Pembiayaan",
+      rows: [
+        detailRow("Transportasi Ke Sekolah", s["Transportasi Ke Sekolah"]),
+        detailRow("Jarak Ke Sekolah", s["Jarak Ke Sekolah"]),
+        detailRow("Waktu Tempuh", s["Waktu Tempuh"]),
+        detailRow("Yang Membiayai", s["Yang Membiayai"]),
+      ]
+    },
+    {
+      title: "Riwayat Pendidikan Sebelumnya",
+      rows: [
+        detailRow("Pra Sekolah", s["Pra Sekolah"]),
+        detailRow("Jenjang Sekolah Asal", s["Jenjang Sekolah Asal"]),
+        detailRow("NPSN Sekolah Asal", s["NPSN Sekolah Asal"]),
+        detailRow("Nama Sekolah Asal", s["Nama Sekolah Asal"]),
+        detailRow("Alamat Sekolah Asal", s["Alamat Sekolah Asal"]),
+      ]
+    },
+    {
       title: "Alamat",
       rows: [
         detailRow("Alamat", s["Alamat"]),
+        detailRow("RT", s["RT"]),
+        detailRow("RW", s["RW"]),
         detailRow("Kelurahan", s["Kelurahan"]),
         detailRow("Kecamatan", s["Kecamatan"]),
         detailRow("Kota", s["Kota"]),
         detailRow("Provinsi", s["Provinsi"]),
         detailRow("Kode Pos", s["Kode Pos"]),
+        coordRow(s["Garis Lintang"], s["Garis Bujur"]),
       ]
     },
     {
       title: "Data Ayah",
       rows: [
         detailRow("Nama Ayah", s["Nama Ayah"]),
+        detailRow("NIK Ayah", s["NIK Ayah"]),
         detailRow("TTL Ayah", formatTTL(s["Tempat Lahir Ayah"], s["Tanggal Lahir Ayah"])),
         detailRow("Pendidikan", s["Pendidikan Ayah"]),
         detailRow("Pekerjaan", s["Pekerjaan Ayah"]),
+        detailRow("Penghasilan", s["Penghasilan Ayah"]),
         detailRow("Status", s["Status Ayah"]),
-        detailRow("No. HP", s["No. HP Ayah"]),
         detailRow("Email", s["Email Ayah"]),
+        detailRow("No. HP", s["No. HP Ayah"]),
       ]
     },
     {
       title: "Data Ibu",
       rows: [
         detailRow("Nama Ibu", s["Nama Ibu"]),
+        detailRow("NIK Ibu", s["NIK Ibu"]),
         detailRow("TTL Ibu", formatTTL(s["Tempat Lahir Ibu"], s["Tanggal Lahir Ibu"])),
         detailRow("Pendidikan", s["Pendidikan Ibu"]),
         detailRow("Pekerjaan", s["Pekerjaan Ibu"]),
+        detailRow("Penghasilan", s["Penghasilan Ibu"]),
         detailRow("Status", s["Status Ibu"]),
-        detailRow("No. HP", s["No. HP Ibu"]),
         detailRow("Email", s["Email Ibu"]),
+        detailRow("No. HP", s["No. HP Ibu"]),
       ]
     },
     {
       title: "Data Wali",
       rows: [
         detailRow("Nama Wali", s["Nama Wali"]),
+        detailRow("NIK Wali", s["NIK Wali"]),
+        detailRow("TTL Wali", formatTTL(s["Tempat Lahir Wali"], s["Tanggal Lahir Wali"])),
         detailRow("Hubungan Wali", s["Hubungan Wali"]),
-        detailRow("No. HP", s["No. HP Wali"]),
+        detailRow("Pendidikan", s["Pendidikan Wali"]),
+        detailRow("Pekerjaan", s["Pekerjaan Wali"]),
+        detailRow("Penghasilan", s["Penghasilan Wali"]),
+        detailRow("Status", s["Status Wali"]),
         detailRow("Email", s["Email Wali"]),
+        detailRow("No. HP", s["No. HP Wali"]),
       ]
     },
   ];
