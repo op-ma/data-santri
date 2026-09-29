@@ -3,7 +3,7 @@
 
 // Naikkan versi ini setiap kali deploy perubahan baru, agar SW lama dibersihkan
 // dan pengguna mendapat prompt "Refresh Sekarang" untuk memuat versi terbaru.
-const CACHE_VERSION = "v8";
+const CACHE_VERSION = "v10";
 const CACHE_NAME = `santri-app-cache-${CACHE_VERSION}`;
 
 const PRECACHE_ASSETS = [

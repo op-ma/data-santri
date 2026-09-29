@@ -137,7 +137,7 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         <div>
           <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Markaz / Sekolah</label>
           <select id="filterMarkaz" class="w-full rounded-md px-2 py-1.5 text-xs">
@@ -154,6 +154,12 @@
           <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Kelas</label>
           <select id="filterKelas" class="w-full rounded-md px-2 py-1.5 text-xs">
             <option value="">Semua Kelas</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Kamar</label>
+          <select id="filterKamar" class="w-full rounded-md px-2 py-1.5 text-xs">
+            <option value="">Semua Kamar</option>
           </select>
         </div>
         <div>
@@ -264,6 +270,13 @@
         <div id="asalPerTingkat" class="overflow-x-auto scrollbar-thin"></div>
       </section>
 
+      <!-- Pekerjaan, penghasilan & pendidikan orang tua per tingkat -->
+      <section class="bg-white rounded-lg border p-3 sm:p-4" style="border-color:rgba(11,31,58,0.10);">
+        <h3 class="text-xs font-semibold mb-1" style="color:var(--navy-900);">Data Pekerjaan, Penghasilan &amp; Pendidikan Orang Tua per Tingkat</h3>
+        <p class="text-[11px] text-gray-400 mb-3">Klik "Rincian" untuk melihat rincian data Ayah dan Ibu per kategori.</p>
+        <div id="ortuPerTingkat" class="overflow-x-auto scrollbar-thin"></div>
+      </section>
+
       <p class="text-[11px] text-gray-400">Semua grafik dan tabel di tab ini mengikuti pencarian &amp; filter yang sedang aktif di tab Data Siswa.</p>
     </div>
     <!-- /TAB PANEL: GRAFIK & ANALITIK -->
@@ -364,6 +377,17 @@ function sortKelas(a,b){
   return String(a).localeCompare(String(b));
 }
 
+function parseKamar(v){
+  const m = String(v||"").trim().match(/^(.*?)(\d+)\s*$/);
+  if(m) return { name: m[1].trim(), num: parseInt(m[2], 10) };
+  return { name: String(v||"").trim(), num: 0 };
+}
+function sortKamar(a,b){
+  const pa = parseKamar(a), pb = parseKamar(b);
+  if(pa.name !== pb.name) return pa.name.localeCompare(pb.name);
+  return pa.num - pb.num;
+}
+
 function compareByKey(a, b, key){
   const va = a[key] !== undefined && a[key] !== null ? a[key] : "";
   const vb = b[key] !== undefined && b[key] !== null ? b[key] : "";
@@ -447,12 +471,14 @@ function populateFilterOptions(){
   const markazSel = document.getElementById("filterMarkaz");
   const tingkatSel = document.getElementById("filterTingkat");
   const kelasSel = document.getElementById("filterKelas");
+  const kamarSel = document.getElementById("filterKamar");
   const pegawaiSel = document.getElementById("filterPegawai");
   const yatimSel = document.getElementById("filterYatim");
 
   const curMarkaz = markazSel.value;
   const curTingkat = tingkatSel.value;
   const curKelas = kelasSel.value;
+  const curKamar = kamarSel.value;
   const curPegawai = pegawaiSel.value;
   const curYatim = yatimSel.value;
 
@@ -476,6 +502,15 @@ function populateFilterOptions(){
     kelasOptions.map(k=>`<option value="${k.replace(/"/g,'&quot;')}">${k}</option>`).join("");
   kelasSel.value = kelasOptions.includes(curKelas) ? curKelas : "";
 
+  // Kamar cascades based on selected markaz (kamar biasanya spesifik per markaz/asrama)
+  const kamarScoped = allStudents.filter(s=>
+    (!markazSel.value || s["Sekolah"] === markazSel.value)
+  );
+  const kamarOptions = uniqueSorted(kamarScoped.map(s=>s["Kamar"]), sortKamar);
+  kamarSel.innerHTML = '<option value="">Semua Kamar</option>' +
+    kamarOptions.map(k=>`<option value="${k.replace(/"/g,'&quot;')}">${k}</option>`).join("");
+  kamarSel.value = kamarOptions.includes(curKamar) ? curKamar : "";
+
   const pegawaiOptions = uniqueSorted(allStudents.map(s=>s["Anak Pegawai"]));
   pegawaiSel.innerHTML = '<option value="">Semua</option>' +
     pegawaiOptions.map(p=>`<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join("");
@@ -493,6 +528,7 @@ function applyFiltersAndSearch(){
   const markaz = document.getElementById("filterMarkaz").value;
   const tingkat = document.getElementById("filterTingkat").value;
   const kelas = document.getElementById("filterKelas").value;
+  const kamar = document.getElementById("filterKamar").value;
   const pegawai = document.getElementById("filterPegawai").value;
   const yatim = document.getElementById("filterYatim").value;
 
@@ -500,6 +536,7 @@ function applyFiltersAndSearch(){
     if(markaz && s["Sekolah"] !== markaz) return false;
     if(tingkat && s["Tingkat"] !== tingkat) return false;
     if(kelas && s["Kelas"] !== kelas) return false;
+    if(kamar && s["Kamar"] !== kamar) return false;
     if(pegawai && s["Anak Pegawai"] !== pegawai) return false;
     if(yatim && s["Status Yatim"] !== yatim) return false;
     if(q){
@@ -857,6 +894,113 @@ function renderKelasPerTingkat(){
   }).join("");
 }
 
+// Urutan alami untuk kategori Pendidikan & Penghasilan (bukan sekadar abjad/jumlah)
+const PENDIDIKAN_ORDER = ["Tidak Sekolah","SD/MI","SMP/MTs","SMA/MA/SMK","D1","D2","D3","D4/ S1","S2","S3"];
+function sortPendidikan(a,b){
+  const ia = PENDIDIKAN_ORDER.indexOf(a), ib = PENDIDIKAN_ORDER.indexOf(b);
+  if(ia===-1 && ib===-1) return String(a).localeCompare(String(b));
+  if(ia===-1) return 1;
+  if(ib===-1) return -1;
+  return ia-ib;
+}
+
+const PENGHASILAN_ORDER = ["Tidak Ada","Kurang dari 500.000","500.000 - 1.000.000","1.000.001 - 2.000.000","2.000.001 - 3.000.000","3.000.001 - 5.000.000","Lebih dari 5.000.000"];
+function sortPenghasilan(a,b){
+  const ia = PENGHASILAN_ORDER.indexOf(a), ib = PENGHASILAN_ORDER.indexOf(b);
+  if(ia===-1 && ib===-1) return String(a).localeCompare(String(b));
+  if(ia===-1) return 1;
+  if(ib===-1) return -1;
+  return ia-ib;
+}
+
+function tallyField(list, field){
+  const map = {};
+  let kosong = 0;
+  list.forEach(s=>{
+    const v = String(s[field]||"").trim();
+    if(v) map[v] = (map[v]||0) + 1; else kosong++;
+  });
+  return { map, kosong };
+}
+
+function rankedListHtml(map, kosong, orderFn){
+  const entries = Object.entries(map);
+  const sorted = orderFn ? entries.sort((a,b)=>orderFn(a[0],b[0])) : entries.sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0]));
+  const items = sorted.map(([k,v])=>`<li class="flex justify-between gap-2"><span>${escHtml(k)}</span><span class="text-gray-500">${v}</span></li>`);
+  if(kosong) items.push(`<li class="flex justify-between gap-2 text-gray-400"><span>(Belum diisi)</span><span>${kosong}</span></li>`);
+  return `<ul class="text-[11px] space-y-0.5">${items.join("") || '<li class="text-gray-400">-</li>'}</ul>`;
+}
+
+function ortuBlockHtml(list, label){
+  const pend = tallyField(list, `Pendidikan ${label}`);
+  const kerja = tallyField(list, `Pekerjaan ${label}`);
+  const hasil = tallyField(list, `Penghasilan ${label}`);
+  return `<div>
+    <p class="text-[11px] font-semibold mb-1.5" style="color:var(--navy-900);">Data ${label}</p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div><p class="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Pendidikan</p>${rankedListHtml(pend.map, pend.kosong, sortPendidikan)}</div>
+      <div><p class="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Pekerjaan</p>${rankedListHtml(kerja.map, kerja.kosong)}</div>
+      <div><p class="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Penghasilan</p>${rankedListHtml(hasil.map, hasil.kosong, sortPenghasilan)}</div>
+    </div>
+  </div>`;
+}
+
+function renderOrtuPerTingkat(){
+  const box = document.getElementById("ortuPerTingkat");
+  if(!box) return;
+  if(!filtered.length){
+    box.innerHTML = '<p class="text-xs text-gray-400">Tidak ada data.</p>';
+    return;
+  }
+
+  const groups = {};
+  filtered.forEach(s=>{
+    const t = (String(s["Tingkat"]||"").trim()) || "Tidak Diketahui";
+    (groups[t] = groups[t] || []).push(s);
+  });
+  const tingkatKeys = Object.keys(groups).sort(sortTingkat);
+
+  const rowsData = [
+    { label: "Semua Tingkat", list: filtered, isAll: true },
+    ...tingkatKeys.map(t=>({ label: `Tingkat ${t}`, list: groups[t], isAll: false })),
+  ];
+
+  const rowHtml = (r, i) => `
+    <tr class="border-b ${r.isAll?'font-semibold':''}" style="border-color:rgba(11,31,58,0.06); ${r.isAll?'background:#F3ECD9;':''}">
+      <td class="px-2 py-1.5">${escHtml(r.label)}</td>
+      <td class="px-2 py-1.5">${r.list.length}</td>
+      <td class="px-2 py-1.5"><button type="button" class="ortu-toggle text-[11px] font-medium px-2 py-0.5 rounded" style="background:var(--navy-900); color:var(--gold-300);" data-ortu="${i}">Rincian</button></td>
+    </tr>
+    <tr id="ortuDetail${i}" class="hidden" style="background:var(--cream-50);">
+      <td colspan="3" class="px-3 py-3">
+        <div class="grid md:grid-cols-2 gap-4">
+          ${ortuBlockHtml(r.list, "Ayah")}
+          ${ortuBlockHtml(r.list, "Ibu")}
+        </div>
+      </td>
+    </tr>`;
+
+  const rows = rowsData.map(rowHtml).join("");
+  box.innerHTML = `<table class="min-w-full text-sm">
+    <thead style="background:var(--navy-900); color:var(--gold-300);">
+      <tr>
+        <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Tingkat</th>
+        <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Siswa</th>
+        <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Detail</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  box.querySelectorAll(".ortu-toggle").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const row = document.getElementById("ortuDetail" + btn.getAttribute("data-ortu"));
+      const hidden = row.classList.toggle("hidden");
+      btn.textContent = hidden ? "Rincian" : "Tutup";
+    });
+  });
+}
+
 function renderAsalPerTingkat(){
   const box = document.getElementById("asalPerTingkat");
   if(!box) return;
@@ -935,6 +1079,7 @@ function renderAsalPerTingkat(){
 async function renderCharts(){
   try{ renderKelasPerTingkat(); }catch(e){ console.warn("Gagal render kelas per tingkat:", e); }
   try{ renderAsalPerTingkat(); }catch(e){ console.warn("Gagal render asal per tingkat:", e); }
+  try{ renderOrtuPerTingkat(); }catch(e){ console.warn("Gagal render data orang tua per tingkat:", e); }
   try{
     const ok = await ensureChartLoaded();
     const fbTingkat = document.getElementById("chartTingkatFallback");
@@ -1186,6 +1331,7 @@ function bindEvents(){
     });
   });
   document.getElementById("filterKelas").addEventListener("change", applyFiltersAndSearch);
+  document.getElementById("filterKamar").addEventListener("change", applyFiltersAndSearch);
   document.getElementById("filterPegawai").addEventListener("change", ()=>{
     populateFilterOptions();
     applyFiltersAndSearch();
@@ -1200,6 +1346,7 @@ function bindEvents(){
     document.getElementById("filterMarkaz").value = "";
     document.getElementById("filterTingkat").value = "";
     document.getElementById("filterKelas").value = "";
+    document.getElementById("filterKamar").value = "";
     document.getElementById("filterPegawai").value = "";
     document.getElementById("filterYatim").value = "";
     populateFilterOptions();
