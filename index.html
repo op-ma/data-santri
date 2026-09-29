@@ -55,6 +55,9 @@
   .scrollbar-thin::-webkit-scrollbar-track{ background:rgba(11,31,58,0.05); }
 
   .modal-backdrop{ background:rgba(11,31,58,0.55); backdrop-filter:blur(2px); }
+  .cat-item{ cursor:pointer; border-radius:4px; padding:1px 3px; margin:0 -3px; }
+  .cat-item:hover{ background:rgba(201,162,39,0.18); }
+  .student-link{ cursor:pointer; }
 
   .detail-section-title{
     color:var(--navy-900); border-bottom:2px solid var(--gold-300); padding-bottom:3px; margin-bottom:6px; font-weight:600;
@@ -294,6 +297,20 @@
         <button id="closeModalBtn" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
       </div>
       <div id="modalBody" class="p-4 space-y-4"></div>
+    </div>
+  </div>
+
+  <!-- LIST MODAL: daftar siswa per kategori (dipanggil dari tab Grafik & Analitik) -->
+  <div id="listModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg w-full max-w-md max-h-[85vh] overflow-y-auto scrollbar-thin text-xs">
+      <div class="flex items-center justify-between gap-2 px-4 py-3 border-b sticky top-0 bg-white" style="border-color:rgba(11,31,58,0.10);">
+        <div class="min-w-0">
+          <h3 class="text-sm font-semibold" style="color:var(--navy-900);">Daftar Siswa</h3>
+          <p id="listModalSubtitle" class="text-[11px] text-gray-400 truncate"></p>
+        </div>
+        <button id="closeListModalBtn" class="text-gray-400 hover:text-gray-700 text-xl leading-none flex-shrink-0">&times;</button>
+      </div>
+      <div id="listModalBody" class="p-2"></div>
     </div>
   </div>
 
@@ -630,6 +647,32 @@ function coordRow(lat, lng){
   </div>`;
 }
 
+let currentListModalStudents = [];
+
+function openStudentListModal(students, label){
+  currentListModalStudents = students.slice().sort((a,b)=> String(a["Nama"]||"").localeCompare(String(b["Nama"]||"")));
+  document.getElementById("listModalSubtitle").textContent = `${label} — ${currentListModalStudents.length} siswa`;
+
+  const body = document.getElementById("listModalBody");
+  if(!currentListModalStudents.length){
+    body.innerHTML = '<p class="text-xs text-gray-400 p-2">Tidak ada siswa pada kategori ini.</p>';
+  } else {
+    body.innerHTML = `<ul class="divide-y" style="border-color:rgba(11,31,58,0.08);">` +
+      currentListModalStudents.map((s,idx)=>`
+        <li class="py-2 px-2 flex items-center justify-between gap-2 hover:bg-gray-50">
+          <div class="min-w-0">
+            <button type="button" class="student-link font-medium text-left hover:underline block truncate w-full" style="color:var(--blue-700);" data-idx="${idx}">${escHtml(s["Nama"]) || "-"}</button>
+            <p class="text-[10px] text-gray-400 truncate">${escHtml(s["Sekolah"])||"-"} · Tingkat ${escHtml(s["Tingkat"])||"-"} ${escHtml(s["Kelas"])||""}</p>
+          </div>
+          <span class="text-[10px] text-gray-400 flex-shrink-0">${escHtml(s["NIS"])||"-"}</span>
+        </li>`).join("") + `</ul>`;
+  }
+
+  const modal = document.getElementById("listModal");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
 function openDetailModal(s){
   if(!s) return;
   const sections = [
@@ -923,11 +966,41 @@ function tallyField(list, field){
   return { map, kosong };
 }
 
-function rankedListHtml(map, kosong, orderFn){
+// Registry sederhana: menyimpan daftar siswa per kategori supaya bisa dibuka lewat modal
+// tanpa menaruh seluruh array siswa di atribut HTML.
+let categoryListRegistry = {};
+let categoryListCounter = 0;
+function registerCategoryList(students){
+  const id = "c" + (categoryListCounter++);
+  categoryListRegistry[id] = students;
+  return id;
+}
+
+function rankedListHtml(map, kosong, orderFn, sourceList, field){
   const entries = Object.entries(map);
   const sorted = orderFn ? entries.sort((a,b)=>orderFn(a[0],b[0])) : entries.sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0]));
-  const items = sorted.map(([k,v])=>`<li class="flex justify-between gap-2"><span>${escHtml(k)}</span><span class="text-gray-500">${v}</span></li>`);
-  if(kosong) items.push(`<li class="flex justify-between gap-2 text-gray-400"><span>(Belum diisi)</span><span>${kosong}</span></li>`);
+  const clickable = Array.isArray(sourceList) && field;
+
+  const items = sorted.map(([k,v])=>{
+    if(!clickable) return `<li class="flex justify-between gap-2"><span>${escHtml(k)}</span><span class="text-gray-500">${v}</span></li>`;
+    const matched = sourceList.filter(s=> String(s[field]||"").trim() === k);
+    const id = registerCategoryList(matched);
+    return `<li class="cat-item flex justify-between gap-2" data-list-id="${id}" data-cat-label="${escHtml(field)}: ${escHtml(k)}">
+      <span>${escHtml(k)}</span><span class="text-gray-500">${v}</span>
+    </li>`;
+  });
+
+  if(kosong){
+    if(clickable){
+      const matchedKosong = sourceList.filter(s=> !String(s[field]||"").trim());
+      const idK = registerCategoryList(matchedKosong);
+      items.push(`<li class="cat-item flex justify-between gap-2 text-gray-400" data-list-id="${idK}" data-cat-label="${escHtml(field)}: (Belum diisi)">
+        <span>(Belum diisi)</span><span>${kosong}</span>
+      </li>`);
+    } else {
+      items.push(`<li class="flex justify-between gap-2 text-gray-400"><span>(Belum diisi)</span><span>${kosong}</span></li>`);
+    }
+  }
   return `<ul class="text-[11px] space-y-0.5">${items.join("") || '<li class="text-gray-400">-</li>'}</ul>`;
 }
 
@@ -938,9 +1011,9 @@ function ortuBlockHtml(list, label){
   return `<div>
     <p class="text-[11px] font-semibold mb-1.5" style="color:var(--navy-900);">Data ${label}</p>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div><p class="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Pendidikan</p>${rankedListHtml(pend.map, pend.kosong, sortPendidikan)}</div>
-      <div><p class="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Pekerjaan</p>${rankedListHtml(kerja.map, kerja.kosong)}</div>
-      <div><p class="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Penghasilan</p>${rankedListHtml(hasil.map, hasil.kosong, sortPenghasilan)}</div>
+      <div><p class="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Pendidikan</p>${rankedListHtml(pend.map, pend.kosong, sortPendidikan, list, `Pendidikan ${label}`)}</div>
+      <div><p class="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Pekerjaan</p>${rankedListHtml(kerja.map, kerja.kosong, null, list, `Pekerjaan ${label}`)}</div>
+      <div><p class="text-[10px] text-gray-400 mb-0.5 uppercase tracking-wide">Penghasilan</p>${rankedListHtml(hasil.map, hasil.kosong, sortPenghasilan, list, `Penghasilan ${label}`)}</div>
     </div>
   </div>`;
 }
@@ -1017,7 +1090,7 @@ function renderAsalPerTingkat(){
       if(p) prov[p] = (prov[p]||0)+1; else kosongProv++;
       if(k) kota[k] = (kota[k]||0)+1; else kosongKota++;
     });
-    return {total:list.length, prov, kota, kosongProv, kosongKota};
+    return {total:list.length, prov, kota, kosongProv, kosongKota, list};
   };
 
   const groups = {};
@@ -1029,10 +1102,22 @@ function renderAsalPerTingkat(){
   const stats = tingkatKeys.map(t=>({t, ...build(groups[t])}));
   const all = {t:"Semua Tingkat", ...build(filtered)};
 
-  const sortedList = (obj, kosong) => {
+  const sortedList = (obj, kosong, list, field) => {
     const items = Object.entries(obj).sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0]))
-      .map(([name,n])=>`<li class="flex justify-between gap-2"><span>${escHtml(name)}</span><span class="text-gray-500">${n}</span></li>`);
-    if(kosong) items.push(`<li class="flex justify-between gap-2 text-gray-400"><span>(Belum diisi)</span><span>${kosong}</span></li>`);
+      .map(([name,n])=>{
+        const matched = list.filter(s=> norm(s[field]) === name);
+        const id = registerCategoryList(matched);
+        return `<li class="cat-item flex justify-between gap-2" data-list-id="${id}" data-cat-label="${escHtml(field)}: ${escHtml(name)}">
+          <span>${escHtml(name)}</span><span class="text-gray-500">${n}</span>
+        </li>`;
+      });
+    if(kosong){
+      const matchedKosong = list.filter(s=> !norm(s[field]));
+      const idK = registerCategoryList(matchedKosong);
+      items.push(`<li class="cat-item flex justify-between gap-2 text-gray-400" data-list-id="${idK}" data-cat-label="${escHtml(field)}: (Belum diisi)">
+        <span>(Belum diisi)</span><span>${kosong}</span>
+      </li>`);
+    }
     return `<ul class="text-xs space-y-0.5">${items.join("")}</ul>`;
   };
 
@@ -1047,8 +1132,8 @@ function renderAsalPerTingkat(){
     <tr id="asalDetail${i}" class="hidden" style="background:var(--cream-50);">
       <td colspan="5" class="px-3 py-2">
         <div class="grid sm:grid-cols-2 gap-4">
-          <div><p class="text-[11px] font-semibold mb-1" style="color:var(--navy-900);">Provinsi asal</p>${sortedList(st.prov, st.kosongProv)}</div>
-          <div><p class="text-[11px] font-semibold mb-1" style="color:var(--navy-900);">Kota / Kabupaten asal</p>${sortedList(st.kota, st.kosongKota)}</div>
+          <div><p class="text-[11px] font-semibold mb-1" style="color:var(--navy-900);">Provinsi asal</p>${sortedList(st.prov, st.kosongProv, st.list, "Provinsi")}</div>
+          <div><p class="text-[11px] font-semibold mb-1" style="color:var(--navy-900);">Kota / Kabupaten asal</p>${sortedList(st.kota, st.kosongKota, st.list, "Kota")}</div>
         </div>
       </td>
     </tr>`;
@@ -1077,6 +1162,8 @@ function renderAsalPerTingkat(){
 }
 
 async function renderCharts(){
+  categoryListRegistry = {};
+  categoryListCounter = 0;
   try{ renderKelasPerTingkat(); }catch(e){ console.warn("Gagal render kelas per tingkat:", e); }
   try{ renderAsalPerTingkat(); }catch(e){ console.warn("Gagal render asal per tingkat:", e); }
   try{ renderOrtuPerTingkat(); }catch(e){ console.warn("Gagal render data orang tua per tingkat:", e); }
@@ -1367,6 +1454,41 @@ function bindEvents(){
     if(e.target.id === "detailModal"){
       e.currentTarget.classList.add("hidden");
       e.currentTarget.classList.remove("flex");
+    }
+  });
+
+  document.getElementById("closeListModalBtn").addEventListener("click", ()=>{
+    const modal = document.getElementById("listModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  });
+  document.getElementById("listModal").addEventListener("click", (e)=>{
+    if(e.target.id === "listModal"){
+      e.currentTarget.classList.add("hidden");
+      e.currentTarget.classList.remove("flex");
+    }
+  });
+
+  // Delegasi klik: kategori (kota, provinsi, pendidikan, pekerjaan, penghasilan, dsb)
+  // di tab Grafik & Analitik membuka daftar siswa yang termasuk kategori tersebut.
+  document.addEventListener("click", (e)=>{
+    const catBtn = e.target.closest(".cat-item");
+    if(catBtn){
+      const listId = catBtn.getAttribute("data-list-id");
+      const label = catBtn.getAttribute("data-cat-label") || "";
+      const students = categoryListRegistry[listId] || [];
+      openStudentListModal(students, label);
+      return;
+    }
+    const studentBtn = e.target.closest(".student-link");
+    if(studentBtn){
+      const idx = parseInt(studentBtn.getAttribute("data-idx"), 10);
+      const s = currentListModalStudents[idx];
+      if(s){
+        document.getElementById("listModal").classList.add("hidden");
+        document.getElementById("listModal").classList.remove("flex");
+        openDetailModal(s);
+      }
     }
   });
 }
