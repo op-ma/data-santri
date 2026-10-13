@@ -375,13 +375,24 @@
   </main>
 
   <!-- DETAIL MODAL -->
-  <div id="detailModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] overflow-y-auto scrollbar-thin text-xs">
-      <div class="flex items-center justify-between px-4 py-3 border-b sticky top-0 bg-white" style="border-color:rgba(11,31,58,0.10);">
-        <h3 class="text-sm font-semibold" style="color:var(--navy-900);">Detail Data Siswa</h3>
-        <button id="closeModalBtn" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+  <div id="detailModal" class="fixed inset-0 hidden flex-col z-50 overflow-y-auto" style="background:var(--cream-50);">
+    <div class="sticky top-0 z-20" style="background:linear-gradient(120deg, var(--navy-950), var(--blue-700));">
+      <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <button id="closeModalBtn" type="button" class="rounded-md px-3 py-1.5 text-xs font-medium flex-shrink-0" style="background:var(--gold-500); color:var(--navy-950);">&larr; Kembali</button>
+          <div class="min-w-0">
+            <h3 id="detailTitle" class="text-white text-sm sm:text-base font-semibold truncate">Detail Data Siswa</h3>
+            <p id="detailSubtitle" class="text-[11px] truncate" style="color:#E8C766;"></p>
+          </div>
+        </div>
+        <div id="detailActions" class="flex-shrink-0"></div>
       </div>
-      <div id="modalBody" class="p-4 space-y-4"></div>
+    </div>
+    <div class="bg-white border-b sticky z-10" style="top:58px; border-color:rgba(11,31,58,0.10);">
+      <div id="detailTabs" class="max-w-5xl mx-auto px-2 flex gap-1 overflow-x-auto scrollbar-thin whitespace-nowrap"></div>
+    </div>
+    <div class="max-w-5xl mx-auto w-full p-3 sm:p-4">
+      <div id="modalBody" class="bg-white rounded-lg border p-4 sm:p-6 text-[13px]" style="border-color:rgba(11,31,58,0.10); min-height:50vh;"></div>
     </div>
   </div>
 
@@ -901,21 +912,40 @@ function openDetailModal(s){
     },
   ];
 
-  const html = sections.map(sec=>{
-    const rows = sec.rows.filter(r=>r && r.trim() !== "");
-    if(rows.length === 0) return "";
-    return `<div>
-      <h4 class="detail-section-title text-xs">${sec.title}</h4>
-      <div class="space-y-0.5 text-xs">${rows.join("")}</div>
-    </div>`;
-  }).join("");
+  const tabs = sections
+    .map(sec=>({ title: sec.title, rows: sec.rows.filter(r=>r && r.trim() !== "") }))
+    .filter(t=>t.rows.length)
+    .map(t=>({ title: t.title, html: `<h4 class="detail-section-title text-sm">${t.title}</h4><div class="space-y-0.5">${t.rows.join("")}</div>` }));
+  if(!tabs.length) tabs.push({ title: "Data", html: `<p class="text-gray-400">Tidak ada data tambahan.</p>` });
 
-  document.getElementById("modalBody").innerHTML = html || `<p class="text-gray-400 text-xs">Tidak ada data tambahan.</p>`;
   currentDetail = s;
-  if(isAdmin()) appendAdminDetail(s);
-  const modal = document.getElementById("detailModal");
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
+  if(isAdmin()) tabs.push({ title: "📎 Berkas", html: berkasPanelHtml(s), berkas: true });
+  detailTabsData = tabs;
+
+  document.getElementById("detailTitle").textContent = s["Nama"] || "Detail Data Siswa";
+  document.getElementById("detailSubtitle").textContent =
+    `NIS ${s["NIS"] || "-"} · NISN ${s["NISN"] || "-"} · Kelas ${s["Kelas"] || "-"}`;
+  document.getElementById("detailActions").innerHTML = isAdmin()
+    ? `<button type="button" id="detailEditBtn" class="rounded-md px-3 py-1.5 text-xs font-medium text-white border border-white/30">✏️ Edit Data</button>` : "";
+  document.getElementById("detailTabs").innerHTML = tabs.map((t,i)=>
+    `<button type="button" class="detail-tab px-3 py-2.5 text-xs font-medium border-b-2 transition-colors" data-tab-idx="${i}">${t.title}</button>`).join("");
+
+  selectDetailTab(0);
+  showModal("detailModal");
+  document.getElementById("detailModal").scrollTop = 0;
+}
+
+let detailTabsData = [];
+function selectDetailTab(i){
+  const t = detailTabsData[i];
+  if(!t) return;
+  document.querySelectorAll("#detailTabs .detail-tab").forEach((btn,idx)=>{
+    const on = idx === i;
+    btn.style.color = on ? "var(--navy-950)" : "#9CA3AF";
+    btn.style.borderColor = on ? "var(--gold-500)" : "transparent";
+  });
+  document.getElementById("modalBody").innerHTML = t.html;
+  if(t.berkas && currentDetail) loadBerkas(currentDetail);
 }
 
 // ---------- charts ----------
@@ -1859,19 +1889,11 @@ async function saveEdit(){
 }
 
 // ---------- detail (khusus admin): tombol edit + berkas ----------
-function appendAdminDetail(s){
-  currentDetail = s;
-  const body = document.getElementById("modalBody");
-  const top = document.createElement("div");
-  top.innerHTML = `<button type="button" id="detailEditBtn" class="rounded-md px-3 py-1.5 text-xs font-medium text-white" style="background:var(--navy-900);">✏️ Edit Data</button>`;
-  body.prepend(top);
-
+function berkasPanelHtml(s){
   const hasId = !!(String(s["NIS"]||"").trim() || String(s["NISN"]||"").trim());
-  const sec = document.createElement("div");
-  sec.id = "berkasSection";
-  sec.innerHTML = `
-    <h4 class="detail-section-title text-xs">Berkas</h4>
-    <div id="berkasList" class="text-xs space-y-1 mb-3">Memuat berkas...</div>
+  return `
+    <h4 class="detail-section-title text-sm">Berkas</h4>
+    <div id="berkasList" class="text-xs space-y-1 mb-4">Memuat berkas...</div>
     ${hasId ? `
     <div class="grid sm:grid-cols-3 gap-2 items-end">
       <div>
@@ -1887,13 +1909,11 @@ function appendAdminDetail(s){
       <button type="button" id="berkasUploadBtn" class="rounded-md px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);">⬆️ Upload Berkas</button>
       <span id="berkasMsg" class="text-[11px] text-gray-500"></span>
     </div>` : `<p class="text-[11px] text-gray-400">Siswa ini belum punya NIS/NISN. Isi dulu lewat Edit Data sebelum mengunggah berkas.</p>`}`;
-  body.appendChild(sec);
-  if(hasId) loadBerkas(s);
-  else document.getElementById("berkasList").textContent = "";
 }
 
 async function loadBerkas(s){
   const box = document.getElementById("berkasList");
+  if(!box) return;
   try{
     const r = await api("listBerkas", { nis: s["NIS"] || "", nisn: s["NISN"] || "" });
     if(currentDetail !== s) return;
@@ -2017,6 +2037,10 @@ function bindAdminEvents(){
     document.getElementById(id).addEventListener("keydown", (e)=>{ if(e.key === "Enter") doLogin(); });
   });
 
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape" && !document.getElementById("detailModal").classList.contains("hidden")
+       && document.getElementById("editModal").classList.contains("hidden")) hideModal("detailModal");
+  });
   document.getElementById("closeEditBtn").addEventListener("click", ()=> hideModal("editModal"));
   document.getElementById("editCancelBtn").addEventListener("click", ()=> hideModal("editModal"));
   document.getElementById("editSaveBtn").addEventListener("click", saveEdit);
@@ -2029,6 +2053,8 @@ function bindAdminEvents(){
     if(editBtn){ openEditModal(filtered[parseInt(editBtn.getAttribute("data-idx"),10)]); return; }
     const berkasBtn = e.target.closest(".act-berkas");
     if(berkasBtn){ openDetailModal(filtered[parseInt(berkasBtn.getAttribute("data-idx"),10)]); return; }
+    const dTab = e.target.closest(".detail-tab");
+    if(dTab){ selectDetailTab(parseInt(dTab.getAttribute("data-tab-idx"),10)); return; }
     if(e.target.closest("#detailEditBtn")){ openEditModal(currentDetail); return; }
     if(e.target.closest("#berkasUploadBtn")){ uploadBerkas(); return; }
     const del = e.target.closest(".berkas-del");
