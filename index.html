@@ -907,10 +907,22 @@ function openDetailModal(s){
     },
   ];
 
-  const tabs = sections
-    .map(sec=>({ title: sec.title, rows: sec.rows.filter(r=>r && r.trim() !== "") }))
-    .filter(t=>t.rows.length)
+  const ORTU_TITLES = ["Data Ayah","Data Ibu","Data Wali"];
+  const cleaned = sections.map(sec=>({ title: sec.title, rows: sec.rows.filter(r=>r && r.trim() !== "") }));
+  const ortu = cleaned.filter(t=> ORTU_TITLES.includes(t.title) && t.rows.length);
+  const tabs = cleaned
+    .filter(t=> t.rows.length && !ORTU_TITLES.includes(t.title))
     .map(t=>({ title: t.title, html: `<h4 class="detail-section-title text-sm">${t.title}</h4><div class="space-y-0.5">${t.rows.join("")}</div>` }));
+  if(ortu.length){
+    const cols = ortu.map(t=>`<div class="min-w-0">
+        <h5 class="text-xs font-semibold mb-1.5 px-2 py-1 rounded" style="background:#F1E9D3; color:var(--navy-900);">${t.title.replace("Data ","")}</h5>
+        <div class="space-y-0.5">${t.rows.join("")}</div>
+      </div>`).join("");
+    const ortuTab = { title: "Data Orang Tua", html: `<h4 class="detail-section-title text-sm">Data Orang Tua</h4><div class="grid grid-cols-1 md:grid-cols-3 gap-4">${cols}</div>` };
+    // letakkan setelah tab Alamat (atau di akhir bila tidak ada)
+    const idxAlamat = tabs.findIndex(t=> t.title === "Alamat");
+    tabs.splice(idxAlamat === -1 ? tabs.length : idxAlamat + 1, 0, ortuTab);
+  }
   if(!tabs.length) tabs.push({ title: "Data", html: `<p class="text-gray-400">Tidak ada data tambahan.</p>` });
 
   currentDetail = s;
