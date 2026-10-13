@@ -263,7 +263,21 @@
         </button>
       </div>
 
-      <div class="overflow-x-auto scrollbar-thin">
+      <!-- CARD VIEW (layar HP) -->
+      <div class="md:hidden">
+        <div class="flex items-center gap-2 px-3 pt-3 text-xs">
+          <label for="mobileSortKey" class="text-gray-500 flex-shrink-0">Urutkan:</label>
+          <select id="mobileSortKey" class="flex-1 rounded-md px-2 py-1.5 text-xs">
+            <option value="Nama">Nama Santri</option>
+            <option value="Kelas">Kelas</option>
+          </select>
+          <button id="mobileSortDir" type="button" class="rounded-md border px-2.5 py-1.5 text-xs flex-shrink-0" style="border-color:rgba(11,31,58,0.15);">▲ A-Z</button>
+        </div>
+        <div id="cardList" class="p-3 space-y-2.5"></div>
+      </div>
+
+      <!-- TABEL (tablet/desktop) -->
+      <div class="overflow-x-auto scrollbar-thin hidden md:block">
         <table class="min-w-full text-xs">
           <thead style="background:#F1E9D3; color:var(--gold-600);">
             <tr>
@@ -575,6 +589,9 @@ function compareByKey(a, b, key){
 }
 
 function updateSortIndicators(){
+  const mk = document.getElementById("mobileSortKey"), md = document.getElementById("mobileSortDir");
+  if(mk) mk.value = sortKey;
+  if(md) md.textContent = sortDir === "asc" ? "▲ A-Z" : "▼ Z-A";
   document.querySelectorAll(".sort-th").forEach(th=>{
     const key = th.getAttribute("data-sort-key");
     const arrow = th.querySelector(".sort-arrow");
@@ -715,6 +732,40 @@ function renderTable(){
   document.getElementById("resultCount").textContent =
     total === 0 ? "Tidak ada siswa yang cocok dengan pencarian/filter." :
     `Menampilkan ${startIdx+1}-${Math.min(startIdx+PAGE_SIZE,total)} dari ${total} siswa`;
+
+  const cardList = document.getElementById("cardList");
+  if(cardList){
+    cardList.innerHTML = pageItems.length === 0
+      ? `<p class="py-6 text-center text-gray-400 text-xs">Tidak ada data.</p>`
+      : pageItems.map((s, i)=>{
+          const idx = startIdx + i;
+          const line = (label, val)=> val ? `<div class="flex gap-2 py-1 border-b border-dashed" style="border-color:rgba(11,31,58,0.08);"><span class="text-gray-400 w-16 flex-shrink-0">${label}</span><span class="min-w-0 break-words" style="color:var(--navy-950);">${val}</span></div>` : "";
+          return `
+          <div class="student-card rounded-lg border p-3 text-xs cursor-pointer active:bg-gray-50" data-idx="${idx}" style="border-color:rgba(11,31,58,0.12);">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-[11px] text-gray-400">#${idx + 1}</div>
+                <div class="font-semibold text-sm break-words" style="color:var(--navy-950);">${esc(s["Nama"]) || "-"}</div>
+                ${s["Nama Arab"] ? `<div class="font-arabic text-xs text-gray-400 mt-0.5">${esc(s["Nama Arab"])}</div>` : ""}
+              </div>
+              <span class="kelas-badge flex-shrink-0">${esc(s["Kelas"]) || "-"}</span>
+            </div>
+            <div class="mt-2">
+              ${line("NIS", esc(s["NIS"]))}
+              ${line("NISN", esc(s["NISN"]))}
+              ${line("NIK", esc(s["NIK"]))}
+              ${line("TTL", formatTTL(s["Tempat Lahir"], s["Tanggal Lahir"]))}
+              ${line("Ayah", esc(s["Nama Ayah"]))}
+              ${line("Ibu", esc(s["Nama Ibu"]))}
+              ${line("Alamat", formatAlamatGabung(s))}
+            </div>
+            <div class="mt-2 text-right text-[11px] font-medium" style="color:var(--blue-700);">Lihat detail &rarr;</div>
+          </div>`;
+        }).join("");
+    cardList.querySelectorAll(".student-card").forEach(c=>{
+      c.addEventListener("click", ()=> openDetailModal(filtered[parseInt(c.getAttribute("data-idx"),10)]));
+    });
+  }
 
   const tbody = document.getElementById("tableBody");
   if(pageItems.length === 0){
@@ -1562,6 +1613,13 @@ function bindEvents(){
       }
       applyFiltersAndSearch();
     });
+  });
+
+  document.getElementById("mobileSortKey").addEventListener("change", (e)=>{
+    sortKey = e.target.value; sortDir = "asc"; applyFiltersAndSearch();
+  });
+  document.getElementById("mobileSortDir").addEventListener("click", ()=>{
+    sortDir = sortDir === "asc" ? "desc" : "asc"; applyFiltersAndSearch();
   });
 
   document.getElementById("searchBtn").addEventListener("click", applyFiltersAndSearch);
