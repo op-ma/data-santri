@@ -3,7 +3,7 @@
 
 // Naikkan versi ini setiap kali deploy perubahan baru, agar SW lama dibersihkan
 // dan pengguna mendapat prompt "Refresh Sekarang" untuk memuat versi terbaru.
-const CACHE_VERSION = "v12";
+const CACHE_VERSION = "v13";
 const CACHE_NAME = `santri-app-cache-${CACHE_VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -69,7 +69,8 @@ self.addEventListener("fetch", (event) => {
 
 async function networkFirst(request) {
   try {
-    const fresh = await fetch(request);
+    // cache: "no-store" -> lewati cache HTTP browser/hosting agar versi terbaru langsung terambil
+    const fresh = await fetch(request, { cache: "no-store" });
     const cache = await caches.open(CACHE_NAME);
     cache.put(request, fresh.clone());
     return fresh;
