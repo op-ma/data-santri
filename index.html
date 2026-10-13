@@ -36,11 +36,11 @@
 
   .stat-card{ border-left:4px solid var(--gold-500); background:#fff; border:1px solid rgba(11,31,58,0.08); border-left-width:4px; border-left-color:var(--gold-500); }
 
-  select, input[type="text"]{
+  select, input[type="text"], input[type="password"], textarea{
     border:1px solid rgba(11,31,58,0.18);
     background:#fff;
   }
-  select:focus, input[type="text"]:focus{
+  select:focus, input[type="text"]:focus, input[type="password"]:focus, textarea:focus{
     outline:none; border-color:var(--gold-500); box-shadow:0 0 0 3px rgba(201,162,39,0.20);
   }
 
@@ -90,8 +90,13 @@
           <p class="text-[11px]" style="color:#E8C766;">Pesantren Al Ma'tuq</p>
         </div>
       </div>
-      <div id="totalBadge" class="self-start sm:self-auto bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs">
-        Memuat data...
+      <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+        <div id="totalBadge" class="hidden bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-white text-xs">
+          Memuat data...
+        </div>
+        <span id="adminUserLabel" class="hidden text-[11px] text-white/80"></span>
+        <button id="loginBtn" type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);">🔐 Login Admin</button>
+        <button id="logoutBtn" type="button" class="hidden rounded-lg px-3 py-1.5 text-xs font-medium border border-white/30 text-white">Keluar</button>
       </div>
     </div>
   </header>
@@ -110,6 +115,44 @@
     <!-- ERROR BOX -->
     <div id="errorBox" class="hidden max-w-7xl mx-auto bg-red-50 border border-red-200 text-red-800 rounded-lg p-3 text-xs leading-relaxed"></div>
 
+    <!-- AREA PUBLIK: hanya pencarian nama -->
+    <div id="publicArea" class="max-w-3xl mx-auto space-y-3">
+      <section class="bg-white rounded-lg border p-4 space-y-3" style="border-color:rgba(11,31,58,0.10);">
+        <div>
+          <h2 class="text-sm font-semibold" style="color:var(--navy-900);">Cari Data Siswa</h2>
+          <p class="text-[11px] text-gray-500">Ketik nama siswa (minimal 3 huruf), lalu tekan Cari.</p>
+        </div>
+        <div class="flex gap-2">
+          <input id="publicSearchInput" type="text" autocomplete="off" placeholder="Ketik nama siswa..."
+            class="flex-1 rounded-md px-2.5 py-2 text-xs">
+          <button id="publicSearchBtn" type="button" class="rounded-md px-4 py-2 text-xs font-medium text-white" style="background:var(--navy-900);">Cari</button>
+        </div>
+      </section>
+
+      <section id="publicResultWrap" class="hidden bg-white rounded-lg border" style="border-color:rgba(11,31,58,0.10);">
+        <p id="publicResultInfo" class="p-3 text-xs border-b" style="border-color:rgba(11,31,58,0.10); color:var(--navy-900);"></p>
+        <div class="overflow-x-auto scrollbar-thin">
+          <table class="min-w-full text-xs">
+            <thead style="background:#F1E9D3; color:var(--gold-600);">
+              <tr>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide w-8">No</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Nama</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">NIS</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">NISN</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Tempat, Tgl Lahir</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Kelas</th>
+              </tr>
+            </thead>
+            <tbody id="publicTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <!-- /AREA PUBLIK -->
+
+    <!-- AREA ADMIN (muncul setelah login) -->
+    <div id="adminArea" class="hidden space-y-4">
+
     <!-- STATS -->
     <section id="statsGrid" class="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3"></section>
 
@@ -123,6 +166,10 @@
       <button type="button" id="tabBtnChart" data-tab="chart"
         class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors">
         📊 Grafik &amp; Analitik
+      </button>
+      <button type="button" id="tabBtnFix" data-tab="fix"
+        class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors">
+        ✏️ Data Diperbaiki
       </button>
     </div>
 
@@ -205,10 +252,11 @@
               <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Nama Ayah</th>
               <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Nama Ibu</th>
               <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Alamat</th>
+              <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Aksi</th>
             </tr>
           </thead>
           <tbody id="tableBody">
-            <tr><td colspan="8" class="px-3 py-5 text-center text-gray-400">Sedang memuat data dari Google Sheets...</td></tr>
+            <tr><td colspan="9" class="px-3 py-5 text-center text-gray-400">Memuat data...</td></tr>
           </tbody>
         </table>
       </div>
@@ -284,6 +332,43 @@
     </div>
     <!-- /TAB PANEL: GRAFIK & ANALITIK -->
 
+    <!-- TAB PANEL: DATA DIPERBAIKI -->
+    <div id="tabPanelFix" class="hidden max-w-7xl mx-auto space-y-3">
+      <section class="bg-white rounded-lg border" style="border-color:rgba(11,31,58,0.10);">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 border-b" style="border-color:rgba(11,31,58,0.10);">
+          <div>
+            <h3 class="text-xs font-semibold" style="color:var(--navy-900);">Riwayat Data yang Diperbaiki</h3>
+            <p id="fixInfo" class="text-[11px] text-gray-400">Setiap perubahan lewat mode edit tercatat di sini dan di tab "Data Diperbaiki" pada Google Sheet.</p>
+          </div>
+          <div class="flex gap-2">
+            <input id="fixSearch" type="text" placeholder="Cari nama / NIS / kolom / admin..." class="rounded-md px-2.5 py-1.5 text-xs w-52">
+            <button id="fixRefreshBtn" type="button" class="rounded-md px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);">Muat Ulang</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto scrollbar-thin">
+          <table class="min-w-full text-xs">
+            <thead style="background:#F1E9D3; color:var(--gold-600);">
+              <tr>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Waktu</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Admin</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">NIS</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Nama</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Kolom</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Nilai Lama</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Nilai Baru</th>
+              </tr>
+            </thead>
+            <tbody id="fixBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <!-- /TAB PANEL: DATA DIPERBAIKI -->
+
+    </div>
+    <!-- /AREA ADMIN -->
+
+
     <p class="text-center text-[11px] text-gray-400 pb-3">
       Data bersifat rahasia dan hanya untuk keperluan administratif internal.
     </p>
@@ -314,9 +399,50 @@
     </div>
   </div>
 
+  <!-- LOGIN MODAL -->
+  <div id="loginModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg w-full max-w-sm text-xs">
+      <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color:rgba(11,31,58,0.10);">
+        <h3 class="text-sm font-semibold" style="color:var(--navy-900);">🔐 Login Admin</h3>
+        <button id="closeLoginBtn" type="button" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-4 space-y-3">
+        <p id="loginError" class="hidden bg-red-50 border border-red-200 text-red-800 rounded-md p-2 text-[11px]"></p>
+        <div>
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Username</label>
+          <input id="loginUser" type="text" autocomplete="username" class="w-full rounded-md px-2.5 py-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Password</label>
+          <input id="loginPass" type="password" autocomplete="current-password" class="w-full rounded-md px-2.5 py-1.5 text-xs">
+        </div>
+        <button id="loginSubmit" type="button" class="w-full rounded-md px-4 py-2 text-xs font-medium text-white" style="background:var(--navy-900);">Masuk</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div id="editModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col text-xs">
+      <div class="flex items-center justify-between gap-2 px-4 py-3 border-b" style="border-color:rgba(11,31,58,0.10);">
+        <div class="min-w-0">
+          <h3 class="text-sm font-semibold" style="color:var(--navy-900);">✏️ Edit Data Siswa</h3>
+          <p id="editSubtitle" class="text-[11px] text-gray-400 truncate"></p>
+        </div>
+        <button id="closeEditBtn" type="button" class="text-gray-400 hover:text-gray-700 text-xl leading-none flex-shrink-0">&times;</button>
+      </div>
+      <div id="editBody" class="p-4 space-y-4 overflow-y-auto scrollbar-thin"></div>
+      <div class="flex items-center justify-between gap-2 px-4 py-3 border-t" style="border-color:rgba(11,31,58,0.10);">
+        <p id="editMsg" class="text-[11px] text-gray-500"></p>
+        <div class="flex gap-2 flex-shrink-0">
+          <button id="editCancelBtn" type="button" class="px-3 py-1.5 rounded-md border text-xs" style="border-color:rgba(11,31,58,0.15);">Batal</button>
+          <button id="editSaveBtn" type="button" class="px-3 py-1.5 rounded-md text-xs font-medium text-white" style="background:var(--navy-900);">Simpan ke Google Sheet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
-const SHEET_ID = "1khNpDumFu70ODoqPRqgSoRYVBA4j1rPtno4pkGB51VE";
-const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=1`;
 
 const MONTHS_ID = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
@@ -432,31 +558,6 @@ function updateSortIndicators(){
 function uniqueSorted(arr, sortFn){
   const s = Array.from(new Set(arr.filter(v=>v && String(v).trim()!=="")));
   return sortFn ? s.sort(sortFn) : s.sort((a,b)=>String(a).localeCompare(String(b)));
-}
-
-// ---------- fetch ----------
-async function fetchSheet(){
-  const res = await fetch(GVIZ_URL);
-  if(!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = await res.text();
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if(start === -1 || end === -1) throw new Error("Format respons tidak dikenali");
-  const json = JSON.parse(text.substring(start, end+1));
-  const cols = json.table.cols.map((c,i)=> (c.label && c.label.trim()) ? c.label.trim() : `Kolom${i+1}`);
-  const rows = json.table.rows.map(r=>{
-    const obj = {};
-    cols.forEach((label,i)=>{
-      const cell = r.c ? r.c[i] : null;
-      let val = "";
-      if(cell){
-        val = (cell.f !== undefined && cell.f !== null) ? cell.f : ((cell.v !== undefined && cell.v !== null) ? cell.v : "");
-      }
-      obj[label] = typeof val === "string" ? val.trim() : val;
-    });
-    return obj;
-  });
-  return rows;
 }
 
 // ---------- render: stats ----------
@@ -584,7 +685,7 @@ function renderTable(){
 
   const tbody = document.getElementById("tableBody");
   if(pageItems.length === 0){
-    tbody.innerHTML = `<tr><td colspan="8" class="px-3 py-5 text-center text-gray-400">Tidak ada data.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="px-3 py-5 text-center text-gray-400">Tidak ada data.</td></tr>`;
   } else {
     tbody.innerHTML = pageItems.map((s, i)=>{
       const idx = startIdx + i;
@@ -610,6 +711,10 @@ function renderTable(){
         <td class="px-2 py-2">${esc(s["Nama Ayah"]) || "-"}</td>
         <td class="px-2 py-2">${esc(s["Nama Ibu"]) || "-"}</td>
         <td class="px-2 py-2 max-w-[360px]">${formatAlamatGabung(s)}</td>
+        <td class="px-2 py-2 whitespace-nowrap">
+          <button type="button" class="act-edit text-[11px] font-medium underline" data-idx="${idx}" style="color:var(--blue-700);">✏️ Edit</button>
+          <button type="button" class="act-berkas ml-2 text-[11px] font-medium underline" data-idx="${idx}" style="color:var(--blue-700);">📎 Berkas</button>
+        </td>
       </tr>
     `;
     }).join("");
@@ -806,6 +911,8 @@ function openDetailModal(s){
   }).join("");
 
   document.getElementById("modalBody").innerHTML = html || `<p class="text-gray-400 text-xs">Tidak ada data tambahan.</p>`;
+  currentDetail = s;
+  if(isAdmin()) appendAdminDetail(s);
   const modal = document.getElementById("detailModal");
   modal.classList.remove("hidden");
   modal.classList.add("flex");
@@ -1343,28 +1450,28 @@ function showError(msg){
   box.innerHTML = msg;
   box.classList.remove("hidden");
   document.getElementById("tableBody").innerHTML =
-    `<tr><td colspan="8" class="px-3 py-6 text-center text-gray-400">Gagal memuat data.</td></tr>`;
+    `<tr><td colspan="9" class="px-3 py-6 text-center text-gray-400">Gagal memuat data.</td></tr>`;
 }
 
 let searchDebounce;
 // ---------- tab switching ----------
 function switchTab(tab){
-  const panelData = document.getElementById("tabPanelData");
-  const panelChart = document.getElementById("tabPanelChart");
-  const btnData = document.getElementById("tabBtnData");
-  const btnChart = document.getElementById("tabBtnChart");
-
-  const activeStyle = { color: "var(--navy-950)", borderColor: "var(--gold-500)" };
-
+  const map = {
+    data:  ["tabPanelData",  "tabBtnData"],
+    chart: ["tabPanelChart", "tabBtnChart"],
+    fix:   ["tabPanelFix",   "tabBtnFix"]
+  };
+  Object.keys(map).forEach(k=>{
+    const panel = document.getElementById(map[k][0]);
+    const btn = document.getElementById(map[k][1]);
+    const active = (k === tab);
+    panel.classList.toggle("hidden", !active);
+    btn.style.color = active ? "var(--navy-950)" : "";
+    btn.style.borderColor = active ? "var(--gold-500)" : "transparent";
+    btn.classList.toggle("text-gray-400", !active);
+    btn.classList.toggle("border-transparent", !active);
+  });
   if(tab === "chart"){
-    panelData.classList.add("hidden");
-    panelChart.classList.remove("hidden");
-    btnChart.style.color = activeStyle.color;
-    btnChart.style.borderColor = activeStyle.borderColor;
-    btnChart.classList.remove("text-gray-400", "border-transparent");
-    btnData.style.color = "";
-    btnData.style.borderColor = "transparent";
-    btnData.classList.add("text-gray-400");
     // Chart.js needs a visible canvas to size correctly; resize after it becomes visible.
     requestAnimationFrame(()=>{
       if(chartTingkat) chartTingkat.resize();
@@ -1372,16 +1479,8 @@ function switchTab(tab){
       if(chartGender) chartGender.resize();
       if(chartKategori) chartKategori.resize();
     });
-  } else {
-    panelChart.classList.add("hidden");
-    panelData.classList.remove("hidden");
-    btnData.style.color = activeStyle.color;
-    btnData.style.borderColor = activeStyle.borderColor;
-    btnData.classList.remove("text-gray-400");
-    btnChart.style.color = "";
-    btnChart.style.borderColor = "transparent";
-    btnChart.classList.add("text-gray-400");
   }
+  if(tab === "fix") loadFixes(false);
 }
 
 function bindEvents(){
@@ -1493,27 +1592,466 @@ function bindEvents(){
   });
 }
 
-async function init(){
-  bindEvents();
+// =====================================================================
+// API (Google Apps Script), LOGIN ADMIN, PENCARIAN PUBLIK, EDIT, BERKAS
+// =====================================================================
+// Isi dengan URL Web App hasil Deploy Apps Script (lihat Code.gs).
+const API_URL = "GANTI_DENGAN_URL_WEB_APP_APPS_SCRIPT";
+const SESSION_KEY = "santriAdminSession";
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const UPLOAD_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+const JENIS_BERKAS = ["Kartu Keluarga", "Akta Kelahiran", "Ijazah / SKL", "KTP Orang Tua", "Pas Foto", "KIP / KIS", "Lainnya"];
+
+let adminToken = null;
+let adminUser = "";
+let adminHeaders = [];
+let currentDetail = null;
+let editTarget = null;
+let fixRows = [];
+let fixesLoaded = false;
+let pubAbort = null;
+let pubDebounce;
+
+function isAdmin(){ return !!adminToken && !!adminUser; }
+
+async function api(action, payload, signal){
+  if(!API_URL || API_URL.indexOf("GANTI_") === 0) throw new Error("API_URL di index.html belum diisi.");
+  const res = await fetch(API_URL, {
+    method: "POST",
+    redirect: "follow",
+    signal,
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(Object.assign({ action, token: adminToken }, payload || {}))
+  });
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  if(!json.ok){
+    if(json.error === "SESI_HABIS"){
+      handleSessionExpired();
+      throw new Error("Sesi habis. Silakan login lagi.");
+    }
+    throw new Error(json.error || "Terjadi kesalahan");
+  }
+  return json;
+}
+
+function toast(msg, isErr){
+  const t = document.createElement("div");
+  t.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] px-3 py-2 rounded-md text-xs text-white shadow-lg";
+  t.style.background = isErr ? "#B91C1C" : "var(--navy-900)";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=> t.remove(), 3200);
+}
+
+function showModal(id){ const m = document.getElementById(id); m.classList.remove("hidden"); m.classList.add("flex"); }
+function hideModal(id){ const m = document.getElementById(id); m.classList.add("hidden"); m.classList.remove("flex"); }
+
+// ---------- tampilan publik / admin ----------
+function setView(admin){
+  document.getElementById("publicArea").classList.toggle("hidden", admin);
+  document.getElementById("adminArea").classList.toggle("hidden", !admin);
+  document.getElementById("loginBtn").classList.toggle("hidden", admin);
+  document.getElementById("logoutBtn").classList.toggle("hidden", !admin);
+  document.getElementById("adminUserLabel").classList.toggle("hidden", !admin);
+  document.getElementById("totalBadge").classList.toggle("hidden", !admin);
+  document.getElementById("adminUserLabel").textContent = admin ? `Admin: ${adminUser}` : "";
+}
+
+async function loadAdminData(){
+  const d = await api("list");
+  adminHeaders = d.headers || [];
+  allStudents = d.rows || [];
+  if(!allStudents.length) throw new Error("Data kosong");
+  filtered = allStudents.slice();
+  renderStats();
+  populateFilterOptions();
+  applyFiltersAndSearch();
+}
+
+async function enterAdmin(token, user){
+  adminToken = token;
+  adminUser = user;
+  try{ sessionStorage.setItem(SESSION_KEY, JSON.stringify({ token, user })); }catch(e){}
+  document.getElementById("errorBox").classList.add("hidden");
+  setView(true);
+  document.getElementById("totalBadge").textContent = "Memuat data...";
   try{
-    allStudents = await fetchSheet();
-    if(!allStudents.length) throw new Error("Data kosong");
-    filtered = allStudents.slice();
-    renderStats();
+    await loadAdminData();
+  }catch(err){
+    if(!adminToken) return;
+    console.error(err);
+    showError(`<p class="font-medium mb-1">Gagal memuat data siswa.</p><p>${escHtml(err.message)}</p>`);
+  }
+}
+
+function leaveAdmin(){
+  adminToken = null; adminUser = ""; adminHeaders = [];
+  allStudents = []; filtered = []; fixRows = []; fixesLoaded = false; currentDetail = null; editTarget = null;
+  try{ sessionStorage.removeItem(SESSION_KEY); }catch(e){}
+  ["detailModal","listModal","editModal"].forEach(hideModal);
+  document.getElementById("errorBox").classList.add("hidden");
+  setView(false);
+  switchTab("data");
+}
+
+function handleSessionExpired(){
+  if(!isAdmin()) return;
+  leaveAdmin();
+  openLoginModal("Sesi habis, silakan login lagi.");
+}
+
+// ---------- login ----------
+function setLoginError(msg){
+  const box = document.getElementById("loginError");
+  box.textContent = msg || "";
+  box.classList.toggle("hidden", !msg);
+}
+function openLoginModal(msg){
+  setLoginError(msg || "");
+  document.getElementById("loginPass").value = "";
+  showModal("loginModal");
+  setTimeout(()=> document.getElementById(msg ? "loginPass" : "loginUser").focus(), 50);
+}
+async function doLogin(){
+  const u = document.getElementById("loginUser").value.trim();
+  const p = document.getElementById("loginPass").value;
+  if(!u || !p){ setLoginError("Isi username dan password."); return; }
+  const btn = document.getElementById("loginSubmit");
+  btn.disabled = true; btn.textContent = "Memeriksa...";
+  setLoginError("");
+  try{
+    const r = await api("login", { username: u, password: p });
+    document.getElementById("loginPass").value = "";
+    hideModal("loginModal");
+    await enterAdmin(r.token, r.user);
+  }catch(err){
+    setLoginError(err.message);
+  }finally{
+    btn.disabled = false; btn.textContent = "Masuk";
+  }
+}
+async function doLogout(){
+  try{ await api("logout"); }catch(e){}
+  leaveAdmin();
+}
+
+// ---------- pencarian publik ----------
+async function runPublicSearch(){
+  const q = document.getElementById("publicSearchInput").value.trim();
+  const wrap = document.getElementById("publicResultWrap");
+  const info = document.getElementById("publicResultInfo");
+  const body = document.getElementById("publicTableBody");
+  if(pubAbort) pubAbort.abort();
+  if(q.length < 3){
+    wrap.classList.remove("hidden");
+    info.textContent = "Ketik minimal 3 huruf nama siswa.";
+    body.innerHTML = "";
+    return;
+  }
+  pubAbort = new AbortController();
+  wrap.classList.remove("hidden");
+  info.textContent = "Mencari...";
+  try{
+    const r = await api("search", { q }, pubAbort.signal);
+    const list = r.results || [];
+    if(!list.length){
+      info.textContent = `Tidak ada siswa dengan nama "${q}".`;
+      body.innerHTML = "";
+      return;
+    }
+    info.textContent = list.length >= 20
+      ? "Menampilkan 20 hasil pertama. Perjelas nama untuk mempersempit pencarian."
+      : `Ditemukan ${list.length} siswa.`;
+    body.innerHTML = list.map((s,i)=>`
+      <tr class="border-b align-top" style="border-color:rgba(11,31,58,0.06);">
+        <td class="px-2 py-2">${i+1}</td>
+        <td class="px-2 py-2 font-semibold" style="color:var(--navy-950);">${escHtml(s["Nama"]) || "-"}</td>
+        <td class="px-2 py-2">${escHtml(s["NIS"]) || "-"}</td>
+        <td class="px-2 py-2">${escHtml(s["NISN"]) || "-"}</td>
+        <td class="px-2 py-2">${escHtml(formatTTL(s["Tempat Lahir"], s["Tanggal Lahir"]))}</td>
+        <td class="px-2 py-2"><span class="kelas-badge">${escHtml(s["Kelas"]) || "-"}</span></td>
+      </tr>`).join("");
+  }catch(err){
+    if(err.name === "AbortError") return;
+    info.textContent = `Gagal mencari: ${err.message}`;
+    body.innerHTML = "";
+  }
+}
+
+// ---------- mode edit ----------
+const EDIT_SECTIONS = [
+  { title: "Data Pribadi", fields: ["Nama","Nama Arab","Gender","Tempat Lahir","Tanggal Lahir","Golongan Darah","NIK","No. KK","No. KIP","Kewarganegaraan","Anak Ke","Jml Saudara","Anak Pegawai","Nama Pegawai","Yayasan / Mahad Lain","Status Yatim","Jenis Yatim","Kebutuhan Khusus","Disabilitas","Imunisasi"] },
+  { title: "Data Sekolah", fields: ["NIS","NISN","Sekolah","Program","Angkatan","Tingkat","Kelas","Jurusan","Tahun Ajaran","Status","Tanggal Masuk","Asrama","Kamar"] },
+  { title: "Transportasi & Pembiayaan", fields: ["Transportasi Ke Sekolah","Jarak Ke Sekolah","Waktu Tempuh","Yang Membiayai"] },
+  { title: "Riwayat Pendidikan Sebelumnya", fields: ["Pra Sekolah","Jenjang Sekolah Asal","NPSN Sekolah Asal","Nama Sekolah Asal","Alamat Sekolah Asal"] },
+  { title: "Alamat", fields: ["Alamat","RT","RW","Kelurahan","Kecamatan","Kota","Provinsi","Kode Pos","Garis Lintang","Garis Bujur"] },
+  { title: "Data Ayah", fields: ["Nama Ayah","NIK Ayah","Tempat Lahir Ayah","Tanggal Lahir Ayah","Pendidikan Ayah","Pekerjaan Ayah","Penghasilan Ayah","Status Ayah","Email Ayah","No. HP Ayah"] },
+  { title: "Data Ibu", fields: ["Nama Ibu","NIK Ibu","Tempat Lahir Ibu","Tanggal Lahir Ibu","Pendidikan Ibu","Pekerjaan Ibu","Penghasilan Ibu","Status Ibu","Email Ibu","No. HP Ibu"] },
+  { title: "Data Wali", fields: ["Nama Wali","NIK Wali","Tempat Lahir Wali","Tanggal Lahir Wali","Hubungan Wali","Pendidikan Wali","Penghasilan Wali","Pekerjaan Wali","Status Wali","Email Wali","No. HP Wali"] }
+];
+
+function openEditModal(s){
+  if(!isAdmin() || !s) return;
+  editTarget = s;
+  hideModal("detailModal");
+  const have = new Set(adminHeaders);
+  const used = new Set();
+  const sections = EDIT_SECTIONS.map(sec=>{
+    const fields = sec.fields.filter(f=> have.has(f));
+    fields.forEach(f=> used.add(f));
+    return { title: sec.title, fields };
+  });
+  const rest = adminHeaders.filter(h=> h && !used.has(h) && !/^Kolom\d+$/.test(h));
+  if(rest.length) sections.push({ title: "Kolom Lainnya", fields: rest });
+
+  document.getElementById("editSubtitle").textContent = `${s["Nama"] || "-"} · NIS ${s["NIS"] || "-"} · baris ${s._row}`;
+  document.getElementById("editMsg").textContent = "Hanya kolom yang berubah yang akan disimpan.";
+  document.getElementById("editBody").innerHTML = sections.filter(sec=> sec.fields.length).map(sec=>`
+    <div>
+      <h4 class="detail-section-title text-xs">${escHtml(sec.title)}</h4>
+      <div class="grid sm:grid-cols-2 gap-2">
+        ${sec.fields.map(f=>{
+          const v = s[f] === undefined || s[f] === null ? "" : String(s[f]);
+          const long = /alamat/i.test(f);
+          const hint = /tanggal/i.test(f) ? ' placeholder="dd/mm/yyyy"' : "";
+          const input = long
+            ? `<textarea rows="2" class="edit-field w-full rounded-md px-2.5 py-1.5 text-xs" data-key="${escHtml(f)}" data-orig="${escHtml(v)}">${escHtml(v)}</textarea>`
+            : `<input type="text" class="edit-field w-full rounded-md px-2.5 py-1.5 text-xs" data-key="${escHtml(f)}" data-orig="${escHtml(v)}" value="${escHtml(v)}"${hint}>`;
+          return `<div class="${long ? "sm:col-span-2" : ""}"><label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">${escHtml(f)}</label>${input}</div>`;
+        }).join("")}
+      </div>
+    </div>`).join("");
+  showModal("editModal");
+}
+
+async function saveEdit(){
+  if(!editTarget) return;
+  const changes = {};
+  document.querySelectorAll("#editBody .edit-field").forEach(el=>{
+    const v = el.value.trim();
+    if(v !== el.getAttribute("data-orig").trim()) changes[el.getAttribute("data-key")] = v;
+  });
+  const keys = Object.keys(changes);
+  const msg = document.getElementById("editMsg");
+  if(!keys.length){ msg.textContent = "Tidak ada perubahan."; return; }
+  const btn = document.getElementById("editSaveBtn");
+  btn.disabled = true; btn.textContent = "Menyimpan...";
+  msg.textContent = "";
+  try{
+    const r = await api("update", { row: editTarget._row, expectNama: editTarget["Nama"], changes });
+    Object.assign(editTarget, r.row);
+    fixesLoaded = false;
+    hideModal("editModal");
+    const p = page;
     populateFilterOptions();
     applyFiltersAndSearch();
+    page = p; renderTable();
+    renderStats();
+    toast(`${r.changed} kolom berhasil disimpan ke Google Sheet.`);
+    editTarget = null;
   }catch(err){
-    console.error(err);
-    showError(`
-      <p class="font-medium mb-1">Gagal memuat data dari Google Sheets.</p>
-      <p>Pastikan spreadsheet sudah dibagikan dengan akses "Siapa saja yang memiliki link — Viewer":</p>
-      <ol class="list-decimal list-inside mt-1 space-y-0.5">
-        <li>Buka Google Sheet, klik tombol <b>Bagikan</b> di kanan atas.</li>
-        <li>Ubah akses umum menjadi <b>"Siapa saja yang memiliki link"</b> dengan peran <b>Viewer</b>.</li>
-        <li>Muat ulang (refresh) halaman ini.</li>
-      </ol>
-      <p class="mt-2 text-xs text-red-600">Detail teknis: ${esc(err.message)}</p>
-    `);
+    msg.textContent = `Gagal menyimpan: ${err.message}`;
+    toast("Gagal menyimpan perubahan.", true);
+  }finally{
+    btn.disabled = false; btn.textContent = "Simpan ke Google Sheet";
+  }
+}
+
+// ---------- detail (khusus admin): tombol edit + berkas ----------
+function appendAdminDetail(s){
+  currentDetail = s;
+  const body = document.getElementById("modalBody");
+  const top = document.createElement("div");
+  top.innerHTML = `<button type="button" id="detailEditBtn" class="rounded-md px-3 py-1.5 text-xs font-medium text-white" style="background:var(--navy-900);">✏️ Edit Data</button>`;
+  body.prepend(top);
+
+  const hasId = !!(String(s["NIS"]||"").trim() || String(s["NISN"]||"").trim());
+  const sec = document.createElement("div");
+  sec.id = "berkasSection";
+  sec.innerHTML = `
+    <h4 class="detail-section-title text-xs">Berkas</h4>
+    <div id="berkasList" class="text-xs space-y-1 mb-3">Memuat berkas...</div>
+    ${hasId ? `
+    <div class="grid sm:grid-cols-3 gap-2 items-end">
+      <div>
+        <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Jenis berkas</label>
+        <select id="berkasJenis" class="w-full rounded-md px-2 py-1.5 text-xs">${JENIS_BERKAS.map(j=>`<option>${escHtml(j)}</option>`).join("")}</select>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">File (PDF/JPG/PNG/WEBP, maks 5 MB)</label>
+        <input id="berkasFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="w-full text-xs">
+      </div>
+    </div>
+    <div class="flex items-center gap-2 mt-2">
+      <button type="button" id="berkasUploadBtn" class="rounded-md px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);">⬆️ Upload Berkas</button>
+      <span id="berkasMsg" class="text-[11px] text-gray-500"></span>
+    </div>` : `<p class="text-[11px] text-gray-400">Siswa ini belum punya NIS/NISN. Isi dulu lewat Edit Data sebelum mengunggah berkas.</p>`}`;
+  body.appendChild(sec);
+  if(hasId) loadBerkas(s);
+  else document.getElementById("berkasList").textContent = "";
+}
+
+async function loadBerkas(s){
+  const box = document.getElementById("berkasList");
+  try{
+    const r = await api("listBerkas", { nis: s["NIS"] || "", nisn: s["NISN"] || "" });
+    if(currentDetail !== s) return;
+    const list = r.berkas || [];
+    box.innerHTML = list.length ? list.map(b=>`
+      <div class="flex items-center justify-between gap-2 py-1 border-b border-dashed" style="border-color:rgba(11,31,58,0.08);">
+        <div class="min-w-0">
+          <a href="${escHtml(b.url)}" target="_blank" rel="noopener" class="font-medium underline truncate block" style="color:var(--blue-700);">${escHtml(b.jenis)} — ${escHtml(b.nama)}</a>
+          <span class="text-[10px] text-gray-400">${escHtml(b.waktu)} · ${escHtml(b.admin)}</span>
+        </div>
+        <button type="button" class="berkas-del text-[11px] text-red-600 underline flex-shrink-0" data-file-id="${escHtml(b.fileId)}">Hapus</button>
+      </div>`).join("") : `<p class="text-gray-400">Belum ada berkas.</p>`;
+  }catch(err){
+    if(box) box.textContent = `Gagal memuat berkas: ${err.message}`;
+  }
+}
+
+function readAsBase64(file){
+  return new Promise((resolve, reject)=>{
+    const fr = new FileReader();
+    fr.onload = ()=> resolve(String(fr.result).split(",")[1] || "");
+    fr.onerror = ()=> reject(new Error("Gagal membaca file"));
+    fr.readAsDataURL(file);
+  });
+}
+
+async function uploadBerkas(){
+  const s = currentDetail;
+  if(!s) return;
+  const input = document.getElementById("berkasFile");
+  const msg = document.getElementById("berkasMsg");
+  const file = input.files && input.files[0];
+  if(!file){ msg.textContent = "Pilih file terlebih dahulu."; return; }
+  if(UPLOAD_MIME.indexOf(file.type) === -1){ msg.textContent = "Tipe file harus PDF, JPG, PNG, atau WEBP."; return; }
+  if(file.size > MAX_UPLOAD_BYTES){ msg.textContent = "Ukuran file maksimal 5 MB."; return; }
+  const btn = document.getElementById("berkasUploadBtn");
+  btn.disabled = true; msg.textContent = "Mengunggah...";
+  try{
+    const data = await readAsBase64(file);
+    await api("uploadBerkas", {
+      nis: s["NIS"] || "", nisn: s["NISN"] || "", nama: s["Nama"] || "",
+      jenis: document.getElementById("berkasJenis").value, mime: file.type, data
+    });
+    input.value = "";
+    msg.textContent = "Berkas berhasil diunggah.";
+    toast("Berkas berhasil diunggah ke Google Drive.");
+    loadBerkas(s);
+  }catch(err){
+    msg.textContent = `Gagal: ${err.message}`;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function deleteBerkas(fileId){
+  if(!confirm("Hapus berkas ini? File akan dipindahkan ke sampah Google Drive.")) return;
+  try{
+    await api("deleteBerkas", { fileId });
+    toast("Berkas dihapus.");
+    if(currentDetail) loadBerkas(currentDetail);
+  }catch(err){
+    toast(`Gagal menghapus: ${err.message}`, true);
+  }
+}
+
+// ---------- tab Data Diperbaiki ----------
+async function loadFixes(force){
+  if(!isAdmin()) return;
+  if(fixesLoaded && !force) return;
+  const body = document.getElementById("fixBody");
+  body.innerHTML = `<tr><td colspan="7" class="px-3 py-5 text-center text-gray-400">Memuat riwayat...</td></tr>`;
+  try{
+    const r = await api("fixes");
+    fixRows = r.rows || [];
+    fixesLoaded = true;
+    renderFixes();
+  }catch(err){
+    body.innerHTML = `<tr><td colspan="7" class="px-3 py-5 text-center text-red-600">Gagal memuat: ${escHtml(err.message)}</td></tr>`;
+  }
+}
+
+function renderFixes(){
+  const q = document.getElementById("fixSearch").value.trim().toLowerCase();
+  const list = fixRows.filter(f=> !q || [f.nama, f.nis, f.kolom, f.admin].join(" ").toLowerCase().includes(q));
+  const body = document.getElementById("fixBody");
+  document.getElementById("fixInfo").textContent = fixRows.length
+    ? `${list.length} dari ${fixRows.length} perubahan terakhir (terbaru di atas).`
+    : "Belum ada perubahan yang tercatat.";
+  body.innerHTML = list.length ? list.map(f=>`
+    <tr class="border-b align-top" style="border-color:rgba(11,31,58,0.06);">
+      <td class="px-2 py-2 whitespace-nowrap">${escHtml(f.waktu)}</td>
+      <td class="px-2 py-2">${escHtml(f.admin)}</td>
+      <td class="px-2 py-2">${escHtml(f.nis) || "-"}</td>
+      <td class="px-2 py-2 font-medium" style="color:var(--navy-950);">${escHtml(f.nama)}</td>
+      <td class="px-2 py-2">${escHtml(f.kolom)}</td>
+      <td class="px-2 py-2 text-gray-500">${escHtml(f.lama) || "-"}</td>
+      <td class="px-2 py-2 font-medium">${escHtml(f.baru) || "-"}</td>
+    </tr>`).join("") : `<tr><td colspan="7" class="px-3 py-5 text-center text-gray-400">Tidak ada data.</td></tr>`;
+}
+
+// ---------- event binding tambahan ----------
+function bindAdminEvents(){
+  document.getElementById("publicSearchBtn").addEventListener("click", runPublicSearch);
+  document.getElementById("publicSearchInput").addEventListener("input", ()=>{
+    clearTimeout(pubDebounce);
+    pubDebounce = setTimeout(()=>{
+      const v = document.getElementById("publicSearchInput").value.trim();
+      if(v.length >= 3) runPublicSearch();
+    }, 450);
+  });
+  document.getElementById("publicSearchInput").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){ clearTimeout(pubDebounce); runPublicSearch(); }
+  });
+
+  document.getElementById("loginBtn").addEventListener("click", ()=> openLoginModal());
+  document.getElementById("logoutBtn").addEventListener("click", doLogout);
+  document.getElementById("closeLoginBtn").addEventListener("click", ()=> hideModal("loginModal"));
+  document.getElementById("loginModal").addEventListener("click", (e)=>{ if(e.target.id === "loginModal") hideModal("loginModal"); });
+  document.getElementById("loginSubmit").addEventListener("click", doLogin);
+  ["loginUser","loginPass"].forEach(id=>{
+    document.getElementById(id).addEventListener("keydown", (e)=>{ if(e.key === "Enter") doLogin(); });
+  });
+
+  document.getElementById("closeEditBtn").addEventListener("click", ()=> hideModal("editModal"));
+  document.getElementById("editCancelBtn").addEventListener("click", ()=> hideModal("editModal"));
+  document.getElementById("editSaveBtn").addEventListener("click", saveEdit);
+
+  document.getElementById("fixSearch").addEventListener("input", renderFixes);
+  document.getElementById("fixRefreshBtn").addEventListener("click", ()=> loadFixes(true));
+
+  document.addEventListener("click", (e)=>{
+    const editBtn = e.target.closest(".act-edit");
+    if(editBtn){ openEditModal(filtered[parseInt(editBtn.getAttribute("data-idx"),10)]); return; }
+    const berkasBtn = e.target.closest(".act-berkas");
+    if(berkasBtn){ openDetailModal(filtered[parseInt(berkasBtn.getAttribute("data-idx"),10)]); return; }
+    if(e.target.closest("#detailEditBtn")){ openEditModal(currentDetail); return; }
+    if(e.target.closest("#berkasUploadBtn")){ uploadBerkas(); return; }
+    const del = e.target.closest(".berkas-del");
+    if(del){ deleteBerkas(del.getAttribute("data-file-id")); }
+  });
+}
+
+async function init(){
+  bindEvents();
+  bindAdminEvents();
+  setView(false);
+  // Pulihkan sesi admin (sessionStorage) bila masih valid
+  let saved = null;
+  try{ saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); }catch(e){}
+  if(saved && saved.token){
+    try{
+      adminToken = saved.token;
+      const r = await api("session");
+      await enterAdmin(saved.token, r.user);
+    }catch(e){
+      adminToken = null; adminUser = "";
+      try{ sessionStorage.removeItem(SESSION_KEY); }catch(_){}
+    }
   }
 }
 
