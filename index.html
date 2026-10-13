@@ -182,17 +182,17 @@
     <!-- TAB NAV -->
     <div class="max-w-7xl mx-auto flex gap-1 border-b" style="border-color:rgba(11,31,58,0.10);">
       <button type="button" id="tabBtnData" data-tab="data"
-        class="tab-btn px-3 py-2 text-xs font-medium border-b-2 transition-colors"
-        style="color:var(--navy-950); border-color:var(--gold-500);">
-        📋 Data Siswa
+        class="tab-btn flex-1 sm:flex-none text-center px-3 py-2 text-xs font-medium border-b-2 transition-colors"
+        style="color:var(--navy-950); border-color:var(--gold-500);" title="Data Siswa" aria-label="Data Siswa">
+        <span class="text-xl sm:text-xs leading-none">📋</span><span class="hidden sm:inline"> Data Siswa</span>
       </button>
       <button type="button" id="tabBtnChart" data-tab="chart"
-        class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors">
-        📊 Grafik &amp; Analitik
+        class="tab-btn flex-1 sm:flex-none text-center px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors" title="Grafik &amp; Analitik" aria-label="Grafik &amp; Analitik">
+        <span class="text-xl sm:text-xs leading-none">📊</span><span class="hidden sm:inline"> Grafik &amp; Analitik</span>
       </button>
       <button type="button" id="tabBtnFix" data-tab="fix"
-        class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors">
-        ✏️ Data Diperbaiki
+        class="tab-btn flex-1 sm:flex-none text-center px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors" title="Data Diperbaiki" aria-label="Data Diperbaiki">
+        <span class="text-xl sm:text-xs leading-none">✏️</span><span class="hidden sm:inline"> Data Diperbaiki</span>
       </button>
     </div>
 
@@ -1000,7 +1000,7 @@ function openDetailModal(s){
   if(!tabs.length) tabs.push({ title: "Data", html: `<p class="text-gray-400">Tidak ada data tambahan.</p>` });
 
   currentDetail = s;
-  if(isAdmin()) tabs.push({ title: "📎 Berkas", html: berkasPanelHtml(s), berkas: true });
+  if(isAdmin()) tabs.push({ title: "Berkas", html: berkasPanelHtml(s), berkas: true });
   detailTabsData = tabs;
 
   document.getElementById("detailTitle").textContent = s["Nama"] || "Detail Data Siswa";
@@ -1009,7 +1009,7 @@ function openDetailModal(s){
   document.getElementById("detailActions").innerHTML = isAdmin()
     ? `<button type="button" id="detailEditBtn" class="rounded-md px-3 py-1.5 text-xs font-medium text-white border border-white/30">✏️ Edit Data</button>` : "";
   document.getElementById("detailTabs").innerHTML = tabs.map((t,i)=>
-    `<button type="button" class="detail-tab px-3 py-1.5 text-xs font-medium rounded-md border transition-colors" data-tab-idx="${i}">${t.title}</button>`).join("");
+    `<button type="button" class="detail-tab flex-1 sm:flex-none text-center px-3 py-1.5 text-xs font-medium rounded-md border transition-colors" data-tab-idx="${i}" title="${escHtml(t.title)}" aria-label="${escHtml(t.title)}"><span class="text-lg sm:text-xs leading-none">${DETAIL_TAB_ICONS[t.title] || "📄"}</span><span class="hidden sm:inline"> ${t.title}</span></button>`).join("");
 
   selectDetailTab(0);
   showModal("detailModal");
@@ -1017,6 +1017,10 @@ function openDetailModal(s){
 }
 
 let detailTabsData = [];
+const DETAIL_TAB_ICONS = {
+  "Data Pribadi": "👤", "Data Sekolah": "🏫", "Transportasi & Pembiayaan": "🚌",
+  "Riwayat Pendidikan Sebelumnya": "🎓", "Alamat": "📍", "Data Orang Tua": "👨‍👩‍👧", "Berkas": "📎"
+};
 function selectDetailTab(i){
   const t = detailTabsData[i];
   if(!t) return;
