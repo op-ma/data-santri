@@ -116,8 +116,8 @@
     <div id="errorBox" class="hidden max-w-7xl mx-auto bg-red-50 border border-red-200 text-red-800 rounded-lg p-3 text-xs leading-relaxed"></div>
 
     <!-- AREA PUBLIK: hanya pencarian nama -->
-    <div id="publicArea" class="max-w-3xl mx-auto space-y-3">
-      <section class="bg-white rounded-lg border p-4 space-y-3" style="border-color:rgba(11,31,58,0.10);">
+    <div id="publicArea" class="max-w-5xl mx-auto space-y-3">
+      <section class="max-w-3xl mx-auto bg-white rounded-lg border p-4 space-y-3" style="border-color:rgba(11,31,58,0.10);">
         <div>
           <h2 class="text-sm font-semibold" style="color:var(--navy-900);">Cari Data Siswa</h2>
           <p class="text-[11px] text-gray-500">Ketik nama siswa (minimal 3 huruf), lalu tekan Cari.</p>
@@ -129,7 +129,7 @@
         </div>
       </section>
 
-      <section id="publicResultWrap" class="hidden bg-white rounded-lg border" style="border-color:rgba(11,31,58,0.10);">
+      <section id="publicResultWrap" class="hidden max-w-3xl mx-auto bg-white rounded-lg border" style="border-color:rgba(11,31,58,0.10);">
         <p id="publicResultInfo" class="p-3 text-xs border-b" style="border-color:rgba(11,31,58,0.10); color:var(--navy-900);"></p>
         <div class="overflow-x-auto scrollbar-thin">
           <table class="min-w-full text-xs">
@@ -145,6 +145,29 @@
             </thead>
             <tbody id="publicTableBody"></tbody>
           </table>
+        </div>
+      </section>
+
+      <!-- STATISTIK PUBLIK (agregat saja, tanpa detail siswa) -->
+      <section id="publicStats" class="space-y-3 pt-3">
+        <h2 class="text-sm font-semibold text-center" style="color:var(--navy-900);">Statistik Data Siswa</h2>
+        <div id="pubStatCards" class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3"></div>
+        <p id="pubStatMsg" class="hidden text-[11px] text-gray-400 text-center">Memuat statistik...</p>
+        <div id="pubCharts" class="hidden space-y-3">
+          <div class="grid md:grid-cols-2 gap-3">
+            <div class="bg-white rounded-lg border p-3 sm:p-4" style="border-color:rgba(11,31,58,0.10);">
+              <h3 class="text-xs font-semibold mb-2" style="color:var(--navy-900);">Jumlah Siswa per Tingkat</h3>
+              <div class="h-56"><canvas id="pubChartTingkat"></canvas></div>
+            </div>
+            <div class="bg-white rounded-lg border p-3 sm:p-4" style="border-color:rgba(11,31,58,0.10);">
+              <h3 class="text-xs font-semibold mb-2" style="color:var(--navy-900);">Jumlah Siswa per Markaz (Sekolah)</h3>
+              <div class="h-56"><canvas id="pubChartMarkaz"></canvas></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg border p-3 sm:p-4" style="border-color:rgba(11,31,58,0.10);">
+            <h3 class="text-xs font-semibold mb-2" style="color:var(--navy-900);">Jumlah Siswa per Tingkat berdasarkan Jenis Kelamin</h3>
+            <div class="h-64"><canvas id="pubChartGender"></canvas></div>
+          </div>
         </div>
       </section>
     </div>
@@ -1776,6 +1799,62 @@ async function doLogout(){
   leaveAdmin();
 }
 
+// ---------- statistik publik (agregat) ----------
+let pubCharts = [];
+async function loadPublicStats(){
+  const msg = document.getElementById("pubStatMsg");
+  msg.classList.remove("hidden"); msg.textContent = "Memuat statistik...";
+  try{
+    const r = await api("stats");
+    const cards = [
+      { label: "Total Siswa", value: r.total },
+      { label: "Jumlah Markaz", value: Object.keys(r.markaz || {}).length },
+      { label: "Jumlah Tingkat", value: Object.keys(r.tingkat || {}).length },
+      { label: "Jumlah Kelas", value: r.kelasCount }
+    ];
+    document.getElementById("pubStatCards").innerHTML = cards.map(c=>`
+      <div class="stat-card rounded-lg p-3">
+        <p class="text-lg font-semibold" style="color:var(--navy-950);">${escHtml(c.value)}</p>
+        <p class="text-[11px] text-gray-500 mt-0.5">${c.label}</p>
+      </div>`).join("");
+    msg.classList.add("hidden");
+
+    const ok = await ensureChartLoaded();
+    if(!ok){ msg.classList.remove("hidden"); msg.textContent = "Grafik tidak dapat dimuat (periksa koneksi internet)."; return; }
+    document.getElementById("pubCharts").classList.remove("hidden");
+    pubCharts.forEach(c=> c.destroy()); pubCharts = [];
+
+    const tLabels = Object.keys(r.tingkat).sort(sortTingkat);
+    const mLabels = Object.keys(r.markaz).sort((a,b)=> r.markaz[b] - r.markaz[a]);
+    const gLabels = Object.keys(r.gender).sort(sortTingkat);
+    const palette = ["#123056","#1E4976","#C9A227","#B4881E","#5B7FA6","#E8C766","#0B1F3A","#8FA9C7"];
+
+    pubCharts.push(new Chart(document.getElementById("pubChartTingkat"), {
+      type: "bar",
+      data: { labels: tLabels, datasets: [{ label: "Jumlah Siswa", data: tLabels.map(l=> r.tingkat[l]), backgroundColor: "#1E4976", borderRadius: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    }));
+    pubCharts.push(new Chart(document.getElementById("pubChartMarkaz"), {
+      type: "bar",
+      data: { labels: mLabels, datasets: [{ label: "Jumlah Siswa", data: mLabels.map(l=> r.markaz[l]), backgroundColor: palette, borderRadius: 4 }] },
+      options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    }));
+    const gDatasets = [
+      { label: "Laki-laki", data: gLabels.map(l=> r.gender[l].L), backgroundColor: "#1E4976", borderRadius: 4 },
+      { label: "Perempuan", data: gLabels.map(l=> r.gender[l].P), backgroundColor: "#C9A227", borderRadius: 4 }
+    ];
+    if(gLabels.some(l=> r.gender[l].X > 0)) gDatasets.push({ label: "Tidak Diketahui", data: gLabels.map(l=> r.gender[l].X), backgroundColor: "#9CA3AF", borderRadius: 4 });
+    pubCharts.push(new Chart(document.getElementById("pubChartGender"), {
+      type: "bar",
+      data: { labels: gLabels, datasets: gDatasets },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    }));
+  }catch(err){
+    if(err.name === "AbortError") return;
+    msg.classList.remove("hidden"); msg.textContent = `Statistik tidak dapat dimuat: ${err.message}`;
+  }
+}
+
 // ---------- pencarian publik ----------
 async function runPublicSearch(){
   const q = document.getElementById("publicSearchInput").value.trim();
@@ -2072,6 +2151,7 @@ async function init(){
   bindEvents();
   bindAdminEvents();
   setView(false);
+  loadPublicStats();
   // Pulihkan sesi admin (sessionStorage) bila masih valid
   let saved = null;
   try{ saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); }catch(e){}
