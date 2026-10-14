@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Data Santri">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="icon" type="image/png" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -40,11 +40,11 @@
 
   .stat-card{ border-left:4px solid var(--gold-500); background:#fff; border:1px solid rgba(11,31,58,0.08); border-left-width:4px; border-left-color:var(--gold-500); }
 
-  select, input[type="text"], input[type="password"], textarea{
+  select, input[type="text"], input[type="password"], input[type="date"], textarea{
     border:1px solid rgba(11,31,58,0.18);
     background:#fff;
   }
-  select:focus, input[type="text"]:focus, input[type="password"]:focus, textarea:focus{
+  select:focus, input[type="text"]:focus, input[type="password"]:focus, input[type="date"]:focus, textarea:focus{
     outline:none; border-color:var(--gold-500); box-shadow:0 0 0 3px rgba(201,162,39,0.20);
   }
 
@@ -198,6 +198,10 @@
       <button type="button" id="tabBtnFix" data-tab="fix"
         class="tab-btn flex-1 sm:flex-none text-center px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors" title="Data Diperbaiki" aria-label="Data Diperbaiki">
         <span class="text-xl sm:hidden leading-none">✏️</span><span class="hidden sm:inline"> Data Diperbaiki</span>
+      </button>
+      <button type="button" id="tabBtnNon" data-tab="non"
+        class="tab-btn flex-1 sm:flex-none text-center px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors" title="Siswa Nonaktif" aria-label="Siswa Nonaktif">
+        <span class="text-xl sm:hidden leading-none">🗂️</span><span class="hidden sm:inline"> Siswa Nonaktif</span>
       </button>
     </div>
 
@@ -406,6 +410,43 @@
     </div>
     <!-- /TAB PANEL: DATA DIPERBAIKI -->
 
+    <!-- TAB PANEL: SISWA NONAKTIF -->
+    <div id="tabPanelNon" class="hidden max-w-7xl mx-auto space-y-3">
+      <section class="bg-white rounded-lg border" style="border-color:rgba(11,31,58,0.10);">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 sm:p-4 border-b" style="border-color:rgba(11,31,58,0.10);">
+          <div>
+            <h3 class="text-xs font-semibold" style="color:var(--navy-900);">Siswa Nonaktif</h3>
+            <p id="nonInfo" class="text-[11px] text-gray-400">Siswa yang dinonaktifkan dipindahkan ke tab "Siswa Nonaktif" di Google Sheet.</p>
+          </div>
+          <div class="flex gap-2">
+            <input id="nonSearch" type="text" placeholder="Cari nama / NIS / NISN / alasan..." class="rounded-md px-2.5 py-1.5 text-xs w-56">
+            <button id="nonRefreshBtn" type="button" class="rounded-md px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);">Muat Ulang</button>
+          </div>
+        </div>
+        <!-- kartu (HP) -->
+        <div id="nonCards" class="md:hidden p-3 space-y-2.5"></div>
+        <!-- tabel (tablet/laptop) -->
+        <div class="overflow-x-auto scrollbar-thin hidden md:block">
+          <table class="min-w-full text-xs">
+            <thead style="background:#F1E9D3; color:var(--gold-600);">
+              <tr>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Nama</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">NIS</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">NISN</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Kelas</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Alasan</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Tanggal</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Keterangan</th>
+                <th class="px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide">Oleh</th>
+              </tr>
+            </thead>
+            <tbody id="nonBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <!-- /TAB PANEL: SISWA NONAKTIF -->
+
     </div>
     <!-- /AREA ADMIN -->
 
@@ -462,6 +503,45 @@
         <p id="installHelpIos" class="hidden">Di iPhone/iPad (Safari): ketuk tombol <b>Bagikan</b> (kotak dengan panah ke atas), pilih <b>Tambah ke Layar Utama</b>, lalu ketuk <b>Tambah</b>.</p>
         <p id="installHelpOther" class="hidden">Buka menu browser (titik tiga di kanan atas), lalu pilih <b>Instal aplikasi</b> atau <b>Tambahkan ke layar utama</b>.</p>
         <button id="installHelpOk" type="button" class="w-full rounded-md px-4 py-2 text-xs font-medium text-white mt-2" style="background:var(--navy-900);">Mengerti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NONAKTIFKAN MODAL -->
+  <div id="deactModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg w-full max-w-md text-xs">
+      <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color:rgba(11,31,58,0.10);">
+        <div class="min-w-0">
+          <h3 class="text-sm font-semibold" style="color:var(--navy-900);">Nonaktifkan Siswa</h3>
+          <p id="deactSubtitle" class="text-[11px] text-gray-400 truncate"></p>
+        </div>
+        <button id="closeDeactBtn" type="button" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-4 space-y-3">
+        <p class="bg-amber-50 border border-amber-200 text-amber-900 rounded-md p-2 text-[11px]">Data siswa akan dipindahkan ke tab "Siswa Nonaktif" dan tidak lagi tampil di daftar siswa, statistik, maupun pencarian publik. Data bisa diaktifkan kembali kapan saja.</p>
+        <div>
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Alasan</label>
+          <select id="deactAlasan" class="w-full rounded-md px-2 py-1.5 text-xs">
+            <option>Mutasi / Pindah Sekolah</option>
+            <option>Berhenti / Mengundurkan Diri</option>
+            <option>Dikeluarkan</option>
+            <option>Meninggal Dunia</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Tanggal nonaktif</label>
+          <input id="deactTanggal" type="date" class="w-full rounded-md px-2.5 py-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium mb-0.5" style="color:var(--navy-900);">Keterangan <span id="deactKetReq" class="text-gray-400">(opsional, mis. nama sekolah tujuan)</span></label>
+          <textarea id="deactKet" rows="2" class="w-full rounded-md px-2.5 py-1.5 text-xs"></textarea>
+        </div>
+        <p id="deactMsg" class="hidden text-[11px] text-red-600"></p>
+        <div class="flex justify-end gap-2">
+          <button id="deactCancelBtn" type="button" class="px-3 py-1.5 rounded-md border text-xs" style="border-color:rgba(11,31,58,0.15);">Batal</button>
+          <button id="deactSubmitBtn" type="button" class="px-3 py-1.5 rounded-md text-xs font-medium text-white" style="background:#B91C1C;">Nonaktifkan</button>
+        </div>
       </div>
     </div>
   </div>
@@ -878,8 +958,10 @@ function openStudentListModal(students, label){
   modal.classList.add("flex");
 }
 
-function openDetailModal(s){
+function openDetailModal(s, opts){
   if(!s) return;
+  opts = opts || {};
+  const readonly = !!opts.readonly;
   const sections = [
     {
       title: "Data Pribadi",
@@ -924,7 +1006,7 @@ function openDetailModal(s){
       ]
     },
     {
-      title: "Transportasi",
+      title: "Transportasi & Pembiayaan",
       rows: [
         detailRow("Transportasi Ke Sekolah", s["Transportasi Ke Sekolah"]),
         detailRow("Jarak Ke Sekolah", s["Jarak Ke Sekolah"]),
@@ -933,7 +1015,7 @@ function openDetailModal(s){
       ]
     },
     {
-      title: "Riwayat Pendidikan",
+      title: "Riwayat Pendidikan Sebelumnya",
       rows: [
         detailRow("Pra Sekolah", s["Pra Sekolah"]),
         detailRow("Jenjang Sekolah Asal", s["Jenjang Sekolah Asal"]),
@@ -1021,14 +1103,24 @@ function openDetailModal(s){
   if(!tabs.length) tabs.push({ title: "Data", html: `<p class="text-gray-400">Tidak ada data tambahan.</p>` });
 
   currentDetail = s;
+  detailReadonly = readonly;
+  if(readonly){
+    tabs.unshift({ title: "Status Nonaktif", html: `<h4 class="detail-section-title text-sm">Status Nonaktif</h4><div class="space-y-0.5">${
+      [detailRow("Alasan", s["Alasan"]), detailRow("Tanggal", s["Tanggal Nonaktif"]), detailRow("Keterangan", s["Keterangan"]), detailRow("Dinonaktifkan oleh", s["Dinonaktifkan Oleh"])].filter(r=>r && r.trim()!=="").join("")
+    }</div>` });
+  }
   if(isAdmin()) tabs.push({ title: "Berkas", html: berkasPanelHtml(s), berkas: true });
   detailTabsData = tabs;
 
   document.getElementById("detailTitle").textContent = s["Nama"] || "Detail Data Siswa";
   document.getElementById("detailSubtitle").textContent =
     `NIS ${s["NIS"] || "-"} · NISN ${s["NISN"] || "-"} · Kelas ${s["Kelas"] || "-"}`;
-  document.getElementById("detailActions").innerHTML = isAdmin()
-    ? `<button type="button" id="detailEditBtn" class="rounded-md px-3 py-1.5 text-xs font-medium text-white border border-white/30"><span class="sm:hidden">✏️ </span>Edit Data</button>` : "";
+  document.getElementById("detailActions").innerHTML = !isAdmin() ? "" : readonly
+    ? `<button type="button" id="detailReactivateBtn" class="rounded-md px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);">Aktifkan Kembali</button>`
+    : `<div class="flex gap-2">
+         <button type="button" id="detailEditBtn" class="rounded-md px-3 py-1.5 text-xs font-medium text-white border border-white/30"><span class="sm:hidden">✏️ </span>Edit Data</button>
+         <button type="button" id="detailDeactBtn" class="rounded-md px-3 py-1.5 text-xs font-medium text-white" style="background:#B91C1C;">Nonaktifkan</button>
+       </div>`;
   document.getElementById("detailTabs").innerHTML = tabs.map((t,i)=>
     `<button type="button" class="detail-tab flex-1 sm:flex-none text-center px-3 py-1.5 text-xs font-medium rounded-md border transition-colors" data-tab-idx="${i}" title="${escHtml(t.title)}" aria-label="${escHtml(t.title)}"><span class="text-lg sm:hidden leading-none">${DETAIL_TAB_ICONS[t.title] || "📄"}</span><span class="hidden sm:inline"> ${t.title}</span></button>`).join("");
 
@@ -1038,9 +1130,10 @@ function openDetailModal(s){
 }
 
 let detailTabsData = [];
+let detailReadonly = false;
 const DETAIL_TAB_ICONS = {
-  "Data Pribadi": "👤", "Data Sekolah": "🏫", "Transportasi": "🚌",
-  "Riwayat Pendidikan Sebelumnya": "🎓", "Alamat": "📍", "Data Orang Tua": "👨‍👩‍👧", "Berkas": "📎"
+  "Data Pribadi": "👤", "Data Sekolah": "🏫", "Transportasi & Pembiayaan": "🚌",
+  "Riwayat Pendidikan Sebelumnya": "🎓", "Status Nonaktif": "🚫", "Alamat": "📍", "Data Orang Tua": "👨‍👩‍👧", "Berkas": "📎"
 };
 function selectDetailTab(i){
   const t = detailTabsData[i];
@@ -1598,7 +1691,8 @@ function switchTab(tab){
   const map = {
     data:  ["tabPanelData",  "tabBtnData"],
     chart: ["tabPanelChart", "tabBtnChart"],
-    fix:   ["tabPanelFix",   "tabBtnFix"]
+    fix:   ["tabPanelFix",   "tabBtnFix"],
+    non:   ["tabPanelNon",   "tabBtnNon"]
   };
   Object.keys(map).forEach(k=>{
     const panel = document.getElementById(map[k][0]);
@@ -1620,6 +1714,7 @@ function switchTab(tab){
     });
   }
   if(tab === "fix") loadFixes(false);
+  if(tab === "non") loadNonaktif(false);
 }
 
 function bindEvents(){
@@ -1833,9 +1928,9 @@ async function enterAdmin(token, user){
 
 function leaveAdmin(){
   adminToken = null; adminUser = ""; adminHeaders = [];
-  allStudents = []; filtered = []; fixRows = []; fixesLoaded = false; currentDetail = null; editTarget = null;
+  allStudents = []; filtered = []; fixRows = []; fixesLoaded = false; nonRows = []; nonLoaded = false; currentDetail = null; editTarget = null;
   try{ sessionStorage.removeItem(SESSION_KEY); }catch(e){}
-  ["detailModal","listModal","editModal"].forEach(hideModal);
+  ["detailModal","listModal","editModal","deactModal"].forEach(hideModal);
   document.getElementById("errorBox").classList.add("hidden");
   setView(false);
   switchTab("data");
@@ -1986,8 +2081,8 @@ async function runPublicSearch(){
 const EDIT_SECTIONS = [
   { title: "Data Pribadi", fields: ["Nama","Nama Arab","Gender","Tempat Lahir","Tanggal Lahir","Golongan Darah","NIK","No. KK","No. KIP","Kewarganegaraan","Anak Ke","Jml Saudara","Anak Pegawai","Nama Pegawai","Yayasan / Mahad Lain","Status Yatim","Jenis Yatim","Kebutuhan Khusus","Disabilitas","Imunisasi"] },
   { title: "Data Sekolah", fields: ["NIS","NISN","Sekolah","Program","Angkatan","Tingkat","Kelas","Jurusan","Tahun Ajaran","Status","Tanggal Masuk","Asrama","Kamar"] },
-  { title: "Transportasi", fields: ["Transportasi Ke Sekolah","Jarak Ke Sekolah","Waktu Tempuh","Yang Membiayai"] },
-  { title: "Riwayat Pendidikan", fields: ["Pra Sekolah","Jenjang Sekolah Asal","NPSN Sekolah Asal","Nama Sekolah Asal","Alamat Sekolah Asal"] },
+  { title: "Transportasi & Pembiayaan", fields: ["Transportasi Ke Sekolah","Jarak Ke Sekolah","Waktu Tempuh","Yang Membiayai"] },
+  { title: "Riwayat Pendidikan Sebelumnya", fields: ["Pra Sekolah","Jenjang Sekolah Asal","NPSN Sekolah Asal","Nama Sekolah Asal","Alamat Sekolah Asal"] },
   { title: "Alamat", fields: ["Alamat","RT","RW","Kelurahan","Kecamatan","Kota","Provinsi","Kode Pos","Garis Lintang","Garis Bujur"] },
   { title: "Data Ayah", fields: ["Nama Ayah","NIK Ayah","Tempat Lahir Ayah","Tanggal Lahir Ayah","Pendidikan Ayah","Pekerjaan Ayah","Penghasilan Ayah","Status Ayah","Email Ayah","No. HP Ayah"] },
   { title: "Data Ibu", fields: ["Nama Ibu","NIK Ibu","Tempat Lahir Ibu","Tanggal Lahir Ibu","Pendidikan Ibu","Pekerjaan Ibu","Penghasilan Ibu","Status Ibu","Email Ibu","No. HP Ibu"] },
@@ -2187,6 +2282,118 @@ function renderFixes(){
     </tr>`).join("") : `<tr><td colspan="7" class="px-3 py-5 text-center text-gray-400">Tidak ada data.</td></tr>`;
 }
 
+// ---------- nonaktifkan / aktifkan kembali siswa ----------
+let nonRows = [];
+let nonLoaded = false;
+let deactTarget = null;
+
+function openDeactModal(s){
+  if(!isAdmin() || !s) return;
+  deactTarget = s;
+  document.getElementById("deactSubtitle").textContent = `${s["Nama"] || "-"} · NIS ${s["NIS"] || "-"} · Kelas ${s["Kelas"] || "-"}`;
+  document.getElementById("deactAlasan").selectedIndex = 0;
+  document.getElementById("deactKet").value = "";
+  document.getElementById("deactTanggal").value = new Date().toISOString().slice(0,10);
+  document.getElementById("deactMsg").classList.add("hidden");
+  updateDeactKetHint();
+  showModal("deactModal");
+}
+function updateDeactKetHint(){
+  const lain = document.getElementById("deactAlasan").value === "Lainnya";
+  const el = document.getElementById("deactKetReq");
+  el.textContent = lain ? "(wajib diisi)" : "(opsional, mis. nama sekolah tujuan)";
+  el.style.color = lain ? "#B91C1C" : "";
+}
+async function submitDeact(){
+  const s = deactTarget;
+  if(!s) return;
+  const alasan = document.getElementById("deactAlasan").value;
+  const ket = document.getElementById("deactKet").value.trim();
+  const msg = document.getElementById("deactMsg");
+  if(alasan === "Lainnya" && !ket){ msg.textContent = "Keterangan wajib diisi untuk alasan Lainnya."; msg.classList.remove("hidden"); return; }
+  if(!confirm(`Nonaktifkan ${s["Nama"] || "siswa ini"}? Data akan dipindahkan ke tab Siswa Nonaktif.`)) return;
+  const btn = document.getElementById("deactSubmitBtn");
+  btn.disabled = true; btn.textContent = "Memproses...";
+  msg.classList.add("hidden");
+  try{
+    await api("deactivate", { row: s._row, expectNama: s["Nama"], alasan, keterangan: ket, tanggal: document.getElementById("deactTanggal").value });
+    hideModal("deactModal"); hideModal("detailModal");
+    deactTarget = null; currentDetail = null;
+    nonLoaded = false;
+    await loadAdminData();   // nomor baris bergeser setelah baris dihapus -> muat ulang
+    toast("Siswa dinonaktifkan dan dipindahkan ke tab Siswa Nonaktif.");
+  }catch(err){
+    msg.textContent = `Gagal: ${err.message}`; msg.classList.remove("hidden");
+  }finally{
+    btn.disabled = false; btn.textContent = "Nonaktifkan";
+  }
+}
+
+async function loadNonaktif(force){
+  if(!isAdmin()) return;
+  if(nonLoaded && !force) return;
+  document.getElementById("nonBody").innerHTML = `<tr><td colspan="8" class="px-3 py-5 text-center text-gray-400">Memuat...</td></tr>`;
+  document.getElementById("nonCards").innerHTML = `<p class="py-4 text-center text-gray-400">Memuat...</p>`;
+  try{
+    const r = await api("listNonaktif");
+    nonRows = r.rows || [];
+    nonLoaded = true;
+    renderNonaktif();
+  }catch(err){
+    const m = `Gagal memuat: ${escHtml(err.message)}`;
+    document.getElementById("nonBody").innerHTML = `<tr><td colspan="8" class="px-3 py-5 text-center text-red-600">${m}</td></tr>`;
+    document.getElementById("nonCards").innerHTML = `<p class="py-4 text-center text-red-600">${m}</p>`;
+  }
+}
+function renderNonaktif(){
+  const q = document.getElementById("nonSearch").value.trim().toLowerCase();
+  const list = nonRows.filter(s=> !q || [s["Nama"], s["NIS"], s["NISN"], s["Alasan"], s["Keterangan"]].join(" ").toLowerCase().includes(q));
+  document.getElementById("nonInfo").textContent = nonRows.length
+    ? `${list.length} dari ${nonRows.length} siswa nonaktif (terbaru di atas). Klik nama untuk melihat detail.`
+    : "Belum ada siswa nonaktif.";
+  const empty = `Tidak ada data.`;
+  document.getElementById("nonBody").innerHTML = list.length ? list.map(s=>{
+    const i = nonRows.indexOf(s);
+    return `<tr class="border-b align-top" style="border-color:rgba(11,31,58,0.06);">
+      <td class="px-2 py-2"><button type="button" class="non-open font-semibold underline text-left" data-non-idx="${i}" style="color:var(--blue-700);">${escHtml(s["Nama"]) || "-"}</button></td>
+      <td class="px-2 py-2">${escHtml(s["NIS"]) || "-"}</td>
+      <td class="px-2 py-2">${escHtml(s["NISN"]) || "-"}</td>
+      <td class="px-2 py-2"><span class="kelas-badge">${escHtml(s["Kelas"]) || "-"}</span></td>
+      <td class="px-2 py-2">${escHtml(s["Alasan"]) || "-"}</td>
+      <td class="px-2 py-2 whitespace-nowrap">${escHtml(s["Tanggal Nonaktif"]) || "-"}</td>
+      <td class="px-2 py-2 max-w-[240px]">${escHtml(s["Keterangan"]) || "-"}</td>
+      <td class="px-2 py-2">${escHtml(s["Dinonaktifkan Oleh"]) || "-"}</td>
+    </tr>`; }).join("") : `<tr><td colspan="8" class="px-3 py-5 text-center text-gray-400">${empty}</td></tr>`;
+  document.getElementById("nonCards").innerHTML = list.length ? list.map(s=>{
+    const i = nonRows.indexOf(s);
+    return `<div class="non-open rounded-lg border p-3 text-xs cursor-pointer active:bg-gray-50" data-non-idx="${i}" style="border-color:rgba(11,31,58,0.12);">
+      <div class="flex items-start justify-between gap-2">
+        <div class="font-semibold text-sm break-words" style="color:var(--navy-950);">${escHtml(s["Nama"]) || "-"}</div>
+        <span class="kelas-badge flex-shrink-0">${escHtml(s["Kelas"]) || "-"}</span>
+      </div>
+      <div class="mt-1.5 text-gray-500">NIS ${escHtml(s["NIS"]) || "-"} · NISN ${escHtml(s["NISN"]) || "-"}</div>
+      <div class="mt-1.5" style="color:var(--navy-950);"><b>${escHtml(s["Alasan"]) || "-"}</b> · ${escHtml(s["Tanggal Nonaktif"]) || "-"}</div>
+      ${s["Keterangan"] ? `<div class="mt-0.5 text-gray-500 break-words">${escHtml(s["Keterangan"])}</div>` : ""}
+      <div class="mt-2 text-right text-[11px] font-medium" style="color:var(--blue-700);">Lihat detail &rarr;</div>
+    </div>`; }).join("") : `<p class="py-4 text-center text-gray-400">${empty}</p>`;
+}
+
+async function doReactivate(){
+  const s = currentDetail;
+  if(!s || !detailReadonly) return;
+  if(!confirm(`Aktifkan kembali ${s["Nama"] || "siswa ini"}? Data akan dikembalikan ke daftar siswa aktif.`)) return;
+  try{
+    await api("reactivate", { row: s._row, expectNama: s["Nama"] });
+    hideModal("detailModal"); currentDetail = null;
+    nonLoaded = false;
+    await loadAdminData();
+    await loadNonaktif(true);
+    toast("Siswa diaktifkan kembali.");
+  }catch(err){
+    toast(`Gagal: ${err.message}`, true);
+  }
+}
+
 // ---------- event binding tambahan ----------
 function bindAdminEvents(){
   document.getElementById("publicSearchBtn").addEventListener("click", runPublicSearch);
@@ -2218,6 +2425,13 @@ function bindAdminEvents(){
   document.getElementById("editCancelBtn").addEventListener("click", ()=> hideModal("editModal"));
   document.getElementById("editSaveBtn").addEventListener("click", saveEdit);
 
+  document.getElementById("nonSearch").addEventListener("input", renderNonaktif);
+  document.getElementById("nonRefreshBtn").addEventListener("click", ()=> loadNonaktif(true));
+  document.getElementById("closeDeactBtn").addEventListener("click", ()=> hideModal("deactModal"));
+  document.getElementById("deactCancelBtn").addEventListener("click", ()=> hideModal("deactModal"));
+  document.getElementById("deactSubmitBtn").addEventListener("click", submitDeact);
+  document.getElementById("deactAlasan").addEventListener("change", updateDeactKetHint);
+
   document.getElementById("fixSearch").addEventListener("input", renderFixes);
   document.getElementById("fixRefreshBtn").addEventListener("click", ()=> loadFixes(true));
 
@@ -2225,6 +2439,10 @@ function bindAdminEvents(){
     const dTab = e.target.closest(".detail-tab");
     if(dTab){ selectDetailTab(parseInt(dTab.getAttribute("data-tab-idx"),10)); return; }
     if(e.target.closest("#detailEditBtn")){ openEditModal(currentDetail); return; }
+    if(e.target.closest("#detailDeactBtn")){ openDeactModal(currentDetail); return; }
+    if(e.target.closest("#detailReactivateBtn")){ doReactivate(); return; }
+    const nonOpen = e.target.closest(".non-open");
+    if(nonOpen){ openDetailModal(nonRows[parseInt(nonOpen.getAttribute("data-non-idx"),10)], { readonly: true }); return; }
     if(e.target.closest("#berkasUploadBtn")){ uploadBerkas(); return; }
     const del = e.target.closest(".berkas-del");
     if(del){ deleteBerkas(del.getAttribute("data-file-id")); }
