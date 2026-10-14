@@ -6,6 +6,10 @@
 <title>Informasi Data Santri</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0B1F3A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Data Santri">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -95,7 +99,8 @@
           Memuat data...
         </div>
         <span id="adminUserLabel" class="hidden text-[11px] text-white/80"></span>
-        <button id="loginBtn" type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);">🔐 Login Admin</button>
+        <button id="installBtn" type="button" class="hidden rounded-lg px-3 py-1.5 text-xs font-medium border border-white/30 text-white"><span class="sm:hidden">📲 </span>Pasang Aplikasi</button>
+        <button id="loginBtn" type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);"><span class="sm:hidden">🔐 </span>Login Admin</button>
         <button id="logoutBtn" type="button" class="hidden rounded-lg px-3 py-1.5 text-xs font-medium border border-white/30 text-white">Keluar</button>
       </div>
     </div>
@@ -120,10 +125,10 @@
       <section class="max-w-3xl mx-auto bg-white rounded-lg border p-4 space-y-3" style="border-color:rgba(11,31,58,0.10);">
         <div>
           <h2 class="text-sm font-semibold" style="color:var(--navy-900);">Cari Data Siswa</h2>
-          <p class="text-[11px] text-gray-500">Ketik nama siswa (minimal 3 huruf), lalu tekan Cari.</p>
+          <p class="text-[11px] text-gray-500">Ketik nama siswa (minimal 3 huruf) atau NIS (minimal 6 angka), lalu tekan Cari.</p>
         </div>
         <div class="flex gap-2">
-          <input id="publicSearchInput" type="text" autocomplete="off" placeholder="Ketik nama siswa..."
+          <input id="publicSearchInput" type="text" autocomplete="off" placeholder="Ketik nama atau NIS siswa..."
             class="flex-1 rounded-md px-2.5 py-2 text-xs">
           <button id="publicSearchBtn" type="button" class="rounded-md px-4 py-2 text-xs font-medium text-white" style="background:var(--navy-900);">Cari</button>
         </div>
@@ -184,15 +189,15 @@
       <button type="button" id="tabBtnData" data-tab="data"
         class="tab-btn flex-1 sm:flex-none text-center px-3 py-2 text-xs font-medium border-b-2 transition-colors"
         style="color:var(--navy-950); border-color:var(--gold-500);" title="Data Siswa" aria-label="Data Siswa">
-        <span class="text-xl sm:text-xs leading-none">📋</span><span class="hidden sm:inline"> Data Siswa</span>
+        <span class="text-xl sm:hidden leading-none">📋</span><span class="hidden sm:inline"> Data Siswa</span>
       </button>
       <button type="button" id="tabBtnChart" data-tab="chart"
         class="tab-btn flex-1 sm:flex-none text-center px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors" title="Grafik &amp; Analitik" aria-label="Grafik &amp; Analitik">
-        <span class="text-xl sm:text-xs leading-none">📊</span><span class="hidden sm:inline"> Grafik &amp; Analitik</span>
+        <span class="text-xl sm:hidden leading-none">📊</span><span class="hidden sm:inline"> Grafik &amp; Analitik</span>
       </button>
       <button type="button" id="tabBtnFix" data-tab="fix"
         class="tab-btn flex-1 sm:flex-none text-center px-3 py-2 text-xs font-medium border-b-2 border-transparent text-gray-400 transition-colors" title="Data Diperbaiki" aria-label="Data Diperbaiki">
-        <span class="text-xl sm:text-xs leading-none">✏️</span><span class="hidden sm:inline"> Data Diperbaiki</span>
+        <span class="text-xl sm:hidden leading-none">✏️</span><span class="hidden sm:inline"> Data Diperbaiki</span>
       </button>
     </div>
 
@@ -203,7 +208,7 @@
     <!-- SEARCH & FILTER -->
     <section class="max-w-7xl mx-auto bg-white rounded-lg border border-navy-900/10 p-3 sm:p-4 space-y-3" style="border-color:rgba(11,31,58,0.10);">
       <div class="flex flex-col sm:flex-row gap-2">
-        <input id="searchInput" type="text" placeholder="Cari berdasarkan Nama, NISN, NIK, Nama Ayah, atau Nama Ibu..."
+        <input id="searchInput" type="text" placeholder="Cari berdasarkan Nama, NIS, NISN, NIK, Nama Ayah, atau Nama Ibu..."
           class="flex-1 rounded-md px-2.5 py-1.5 text-xs">
         <button id="searchBtn" class="rounded-md px-4 py-1.5 text-xs font-medium text-white" style="background:var(--navy-900);">
           Cari
@@ -446,11 +451,26 @@
     </div>
   </div>
 
+  <!-- PETUNJUK PASANG (iPhone/iPad & browser tanpa prompt otomatis) -->
+  <div id="installHelpModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg w-full max-w-sm text-xs">
+      <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color:rgba(11,31,58,0.10);">
+        <h3 class="text-sm font-semibold" style="color:var(--navy-900);"><span class="sm:hidden">📲 </span>Pasang Aplikasi</h3>
+        <button id="closeInstallHelpBtn" type="button" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-4 space-y-2" style="color:var(--navy-900);">
+        <p id="installHelpIos" class="hidden">Di iPhone/iPad (Safari): ketuk tombol <b>Bagikan</b> (kotak dengan panah ke atas), pilih <b>Tambah ke Layar Utama</b>, lalu ketuk <b>Tambah</b>.</p>
+        <p id="installHelpOther" class="hidden">Buka menu browser (titik tiga di kanan atas), lalu pilih <b>Instal aplikasi</b> atau <b>Tambahkan ke layar utama</b>.</p>
+        <button id="installHelpOk" type="button" class="w-full rounded-md px-4 py-2 text-xs font-medium text-white mt-2" style="background:var(--navy-900);">Mengerti</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LOGIN MODAL -->
   <div id="loginModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg w-full max-w-sm text-xs">
       <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color:rgba(11,31,58,0.10);">
-        <h3 class="text-sm font-semibold" style="color:var(--navy-900);">🔐 Login Admin</h3>
+        <h3 class="text-sm font-semibold" style="color:var(--navy-900);"><span class="sm:hidden">🔐 </span>Login Admin</h3>
         <button id="closeLoginBtn" type="button" class="text-gray-400 hover:text-gray-700 text-xl leading-none">&times;</button>
       </div>
       <div class="p-4 space-y-3">
@@ -473,7 +493,7 @@
     <div class="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col text-xs">
       <div class="flex items-center justify-between gap-2 px-4 py-3 border-b" style="border-color:rgba(11,31,58,0.10);">
         <div class="min-w-0">
-          <h3 class="text-sm font-semibold" style="color:var(--navy-900);">✏️ Edit Data Siswa</h3>
+          <h3 class="text-sm font-semibold" style="color:var(--navy-900);"><span class="sm:hidden">✏️ </span>Edit Data Siswa</h3>
           <p id="editSubtitle" class="text-[11px] text-gray-400 truncate"></p>
         </div>
         <button id="closeEditBtn" type="button" class="text-gray-400 hover:text-gray-700 text-xl leading-none flex-shrink-0">&times;</button>
@@ -708,7 +728,7 @@ function applyFiltersAndSearch(){
     if(pegawai && s["Anak Pegawai"] !== pegawai) return false;
     if(yatim && s["Status Yatim"] !== yatim) return false;
     if(q){
-      const haystack = [s["Nama"], s["NISN"], s["NIK"], s["Nama Ayah"], s["Nama Ibu"]]
+      const haystack = [s["Nama"], s["NIS"], s["NISN"], s["NIK"], s["Nama Ayah"], s["Nama Ibu"]]
         .map(v=>String(v||"").toLowerCase()).join(" | ");
       if(!haystack.includes(q)) return false;
     }
@@ -913,7 +933,7 @@ function openDetailModal(s){
       ]
     },
     {
-      title: "Riwayat Pendidikan Sebelumnya",
+      title: "Riwayat Pendidikan",
       rows: [
         detailRow("Pra Sekolah", s["Pra Sekolah"]),
         detailRow("Jenjang Sekolah Asal", s["Jenjang Sekolah Asal"]),
@@ -993,9 +1013,10 @@ function openDetailModal(s){
         <div class="space-y-0.5">${t.rows.join("")}</div>
       </div>`).join("");
     const ortuTab = { title: "Data Orang Tua", html: `<h4 class="detail-section-title text-sm">Data Orang Tua</h4><div class="grid grid-cols-1 md:grid-cols-3 gap-4">${cols}</div>` };
-    // letakkan setelah tab Alamat (atau di akhir bila tidak ada)
-    const idxAlamat = tabs.findIndex(t=> t.title === "Alamat");
-    tabs.splice(idxAlamat === -1 ? tabs.length : idxAlamat + 1, 0, ortuTab);
+    // letakkan tepat setelah Data Sekolah (fallback: setelah Data Pribadi, atau paling akhir)
+    let idxAfter = tabs.findIndex(t=> t.title === "Data Sekolah");
+    if(idxAfter === -1) idxAfter = tabs.findIndex(t=> t.title === "Data Pribadi");
+    tabs.splice(idxAfter === -1 ? tabs.length : idxAfter + 1, 0, ortuTab);
   }
   if(!tabs.length) tabs.push({ title: "Data", html: `<p class="text-gray-400">Tidak ada data tambahan.</p>` });
 
@@ -1007,9 +1028,9 @@ function openDetailModal(s){
   document.getElementById("detailSubtitle").textContent =
     `NIS ${s["NIS"] || "-"} · NISN ${s["NISN"] || "-"} · Kelas ${s["Kelas"] || "-"}`;
   document.getElementById("detailActions").innerHTML = isAdmin()
-    ? `<button type="button" id="detailEditBtn" class="rounded-md px-3 py-1.5 text-xs font-medium text-white border border-white/30">✏️ Edit Data</button>` : "";
+    ? `<button type="button" id="detailEditBtn" class="rounded-md px-3 py-1.5 text-xs font-medium text-white border border-white/30"><span class="sm:hidden">✏️ </span>Edit Data</button>` : "";
   document.getElementById("detailTabs").innerHTML = tabs.map((t,i)=>
-    `<button type="button" class="detail-tab flex-1 sm:flex-none text-center px-3 py-1.5 text-xs font-medium rounded-md border transition-colors" data-tab-idx="${i}" title="${escHtml(t.title)}" aria-label="${escHtml(t.title)}"><span class="text-lg sm:text-xs leading-none">${DETAIL_TAB_ICONS[t.title] || "📄"}</span><span class="hidden sm:inline"> ${t.title}</span></button>`).join("");
+    `<button type="button" class="detail-tab flex-1 sm:flex-none text-center px-3 py-1.5 text-xs font-medium rounded-md border transition-colors" data-tab-idx="${i}" title="${escHtml(t.title)}" aria-label="${escHtml(t.title)}"><span class="text-lg sm:hidden leading-none">${DETAIL_TAB_ICONS[t.title] || "📄"}</span><span class="hidden sm:inline"> ${t.title}</span></button>`).join("");
 
   selectDetailTab(0);
   showModal("detailModal");
@@ -1924,9 +1945,10 @@ async function runPublicSearch(){
   const info = document.getElementById("publicResultInfo");
   const body = document.getElementById("publicTableBody");
   if(pubAbort) pubAbort.abort();
-  if(q.length < 3){
+  const isNis = /^\d+$/.test(q);
+  if(isNis ? q.length < 6 : q.length < 3){
     wrap.classList.remove("hidden");
-    info.textContent = "Ketik minimal 3 huruf nama siswa.";
+    info.textContent = isNis ? "Ketik minimal 6 angka NIS." : "Ketik minimal 3 huruf nama siswa.";
     body.innerHTML = "";
     return;
   }
@@ -1937,7 +1959,7 @@ async function runPublicSearch(){
     const r = await api("search", { q }, pubAbort.signal);
     const list = r.results || [];
     if(!list.length){
-      info.textContent = `Tidak ada siswa dengan nama "${q}".`;
+      info.textContent = isNis ? `Tidak ada siswa dengan NIS "${q}".` : `Tidak ada siswa dengan nama "${q}".`;
       body.innerHTML = "";
       return;
     }
@@ -1964,8 +1986,8 @@ async function runPublicSearch(){
 const EDIT_SECTIONS = [
   { title: "Data Pribadi", fields: ["Nama","Nama Arab","Gender","Tempat Lahir","Tanggal Lahir","Golongan Darah","NIK","No. KK","No. KIP","Kewarganegaraan","Anak Ke","Jml Saudara","Anak Pegawai","Nama Pegawai","Yayasan / Mahad Lain","Status Yatim","Jenis Yatim","Kebutuhan Khusus","Disabilitas","Imunisasi"] },
   { title: "Data Sekolah", fields: ["NIS","NISN","Sekolah","Program","Angkatan","Tingkat","Kelas","Jurusan","Tahun Ajaran","Status","Tanggal Masuk","Asrama","Kamar"] },
-  { title: "Transportasi & Pembiayaan", fields: ["Transportasi Ke Sekolah","Jarak Ke Sekolah","Waktu Tempuh","Yang Membiayai"] },
-  { title: "Riwayat Pendidikan Sebelumnya", fields: ["Pra Sekolah","Jenjang Sekolah Asal","NPSN Sekolah Asal","Nama Sekolah Asal","Alamat Sekolah Asal"] },
+  { title: "Transportasi", fields: ["Transportasi Ke Sekolah","Jarak Ke Sekolah","Waktu Tempuh","Yang Membiayai"] },
+  { title: "Riwayat Pendidikan", fields: ["Pra Sekolah","Jenjang Sekolah Asal","NPSN Sekolah Asal","Nama Sekolah Asal","Alamat Sekolah Asal"] },
   { title: "Alamat", fields: ["Alamat","RT","RW","Kelurahan","Kecamatan","Kota","Provinsi","Kode Pos","Garis Lintang","Garis Bujur"] },
   { title: "Data Ayah", fields: ["Nama Ayah","NIK Ayah","Tempat Lahir Ayah","Tanggal Lahir Ayah","Pendidikan Ayah","Pekerjaan Ayah","Penghasilan Ayah","Status Ayah","Email Ayah","No. HP Ayah"] },
   { title: "Data Ibu", fields: ["Nama Ibu","NIK Ibu","Tempat Lahir Ibu","Tanggal Lahir Ibu","Pendidikan Ibu","Pekerjaan Ibu","Penghasilan Ibu","Status Ibu","Email Ibu","No. HP Ibu"] },
@@ -2057,7 +2079,7 @@ function berkasPanelHtml(s){
       </div>
     </div>
     <div class="flex items-center gap-2 mt-2">
-      <button type="button" id="berkasUploadBtn" class="rounded-md px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);">⬆️ Upload Berkas</button>
+      <button type="button" id="berkasUploadBtn" class="rounded-md px-3 py-1.5 text-xs font-medium" style="background:var(--gold-500); color:var(--navy-950);"><span class="sm:hidden">⬆️ </span>Upload Berkas</button>
       <span id="berkasMsg" class="text-[11px] text-gray-500"></span>
     </div>` : `<p class="text-[11px] text-gray-400">Siswa ini belum punya NIS/NISN. Isi dulu lewat Edit Data sebelum mengunggah berkas.</p>`}`;
 }
@@ -2172,7 +2194,7 @@ function bindAdminEvents(){
     clearTimeout(pubDebounce);
     pubDebounce = setTimeout(()=>{
       const v = document.getElementById("publicSearchInput").value.trim();
-      if(v.length >= 3) runPublicSearch();
+      if(/^\d+$/.test(v) ? v.length >= 6 : v.length >= 3) runPublicSearch();
     }, 450);
   });
   document.getElementById("publicSearchInput").addEventListener("keydown", (e)=>{
@@ -2230,6 +2252,35 @@ async function init(){
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// ---------- PWA: tombol pasang aplikasi ----------
+let deferredInstallPrompt = null;
+const isStandalone = ()=> window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const isIos = ()=> /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+function initInstallButton(){
+  const btn = document.getElementById("installBtn");
+  if(!btn || isStandalone()) return;   // sudah terpasang / dibuka sebagai aplikasi
+  const show = ()=> btn.classList.remove("hidden");
+  window.addEventListener("beforeinstallprompt", (e)=>{ e.preventDefault(); deferredInstallPrompt = e; show(); });
+  window.addEventListener("appinstalled", ()=>{ deferredInstallPrompt = null; btn.classList.add("hidden"); toast("Aplikasi berhasil dipasang."); });
+  if(isIos()) show();   // iOS tidak punya prompt otomatis -> tampilkan petunjuk
+  btn.addEventListener("click", async ()=>{
+    if(deferredInstallPrompt){
+      deferredInstallPrompt.prompt();
+      try{ await deferredInstallPrompt.userChoice; }catch(e){}
+      deferredInstallPrompt = null;
+      btn.classList.add("hidden");
+    } else {
+      document.getElementById("installHelpIos").classList.toggle("hidden", !isIos());
+      document.getElementById("installHelpOther").classList.toggle("hidden", isIos());
+      showModal("installHelpModal");
+    }
+  });
+  ["closeInstallHelpBtn","installHelpOk"].forEach(id=>
+    document.getElementById(id).addEventListener("click", ()=> hideModal("installHelpModal")));
+}
+document.addEventListener("DOMContentLoaded", initInstallButton);
 
 // ---------- PWA: service worker registration + update prompt ----------
 if ("serviceWorker" in navigator) {
