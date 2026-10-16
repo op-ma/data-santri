@@ -212,7 +212,7 @@
     <!-- SEARCH & FILTER -->
     <section class="max-w-7xl mx-auto bg-white rounded-lg border border-navy-900/10 p-3 sm:p-4 space-y-3" style="border-color:rgba(11,31,58,0.10);">
       <div class="flex flex-col sm:flex-row gap-2">
-        <input id="searchInput" type="text" placeholder="Cari berdasarkan Nama, NIS, NISN, NIK, Nama Ayah, atau Nama Ibu..."
+        <input id="searchInput" type="text" placeholder="Cari berdasarkan Nama, NIS, NISN, NIK, Nama Ayah, Nama Ibu..."
           class="flex-1 rounded-md px-2.5 py-1.5 text-xs">
         <button id="searchBtn" class="rounded-md px-4 py-1.5 text-xs font-medium text-white" style="background:var(--navy-900);">
           Cari
@@ -1903,7 +1903,15 @@ async function loadAdminData(){
   const d = await api("list");
   adminHeaders = d.headers || [];
   allStudents = d.rows || [];
-  if(!allStudents.length) throw new Error("Data kosong");
+  if(!allStudents.length){
+    const i = d.info || {};
+    const cols = adminHeaders.filter(Boolean).slice(0,8).join(", ");
+    throw new Error(
+      `Tidak ada data siswa yang valid. Sheet "${i.sheet || "?"}" terbaca ${i.total ?? 0} baris data` +
+      (i.skipped ? `, ${i.skipped} baris dilewati karena kolom Program/Angkatan/Tingkat/Kelas ada yang kosong` : "") +
+      `. Kolom terbaca: ${cols || "(tidak ada, periksa baris 1 = judul kolom)"}.`
+    );
+  }
   filtered = allStudents.slice();
   renderStats();
   populateFilterOptions();
